@@ -1,0 +1,168 @@
+{
+  "app": {
+    "name": "YES API Gateway"
+  },
+  "layout": {
+    "menuLabel": "主選單",
+    "menu": {
+      "overview": "總覽",
+      "services": "服務",
+      "hosts": "主機",
+      "templates": "共用範本",
+      "releases": "發佈紀錄",
+      "system": "系統"
+    }
+  },
+  "status": {
+    "healthy": "正常",
+    "unhealthy": "異常",
+    "disabled": "停用",
+    "unchecked": "未檢查",
+    "synced": "已同步",
+    "outOfSync": "未同步"
+  },
+  "common": {
+    "loading": "載入中…",
+    "retry": "重新載入",
+    "empty": "目前沒有資料",
+    "loadFailed": "資料載入失敗",
+    "notAvailable": "此功能尚未開放",
+    "goTo": "前往"
+  },
+  "login": {
+    "title": "登入管理介面",
+    "username": "帳號",
+    "password": "密碼",
+    "submit": "登入",
+    "failed": "登入失敗，請確認帳號密碼後再試一次",
+    "mockHint": "開發模式：任意帳號密碼皆可登入；網址加上 ?role=user 可用唯讀角色登入"
+  },
+  "user": {
+    "menu": "使用者選單",
+    "language": "語言",
+    "logout": "登出",
+    "role": {
+      "admin": "管理員",
+      "user": "唯讀使用者"
+    }
+  },
+  "language": {
+    "zh-TW": "繁體中文",
+    "en": "English"
+  },
+  "system": {
+    "title": "系統",
+    "notAvailable": "尚未開放",
+    "accounts": {
+      "title": "帳號",
+      "description": "管理登入帳號、角色（管理員 / 唯讀使用者）與鎖定狀態。"
+    },
+    "auditLogs": {
+      "title": "稽核日誌",
+      "description": "查詢設定異動、發佈、回滾與登入紀錄，包含異動前後內容與來源 IP。"
+    },
+    "endpoints": {
+      "title": "監聽端點",
+      "description": "檢視外網與內網監聽端點及其用途。",
+      "note": "由設定檔管理、變更需重啟、此處僅供檢視"
+    },
+    "certificates": {
+      "title": "TLS 憑證",
+      "description": "依網域管理 TLS 憑證，並在到期前提醒。"
+    },
+    "ddos": {
+      "title": "DDoS 全域參數",
+      "description": "設定慢速攻擊、請求大小與連線數等應用層全域防護參數。"
+    },
+    "ipRules": {
+      "title": "IP 黑白名單",
+      "description": "手動封鎖或放行 IP，並檢視自動封鎖清單。"
+    },
+    "blockedPaths": {
+      "title": "隱藏內部端點",
+      "description": "設定直接回應 404 / 403 的內部路徑與允許的例外來源。"
+    },
+    "tracing": {
+      "title": "分散式追蹤",
+      "description": "啟用分散式追蹤、設定取樣，並前往 Jaeger / Grafana 查詢。"
+    }
+  },
+  "comingSoon": {
+    "badge": "建置中"
+  },
+  "pages": {
+    "services": {
+      "title": "服務",
+      "description": "集中管理每支對外 API 的入口、防護、處理、分流與後端設定。此頁面正在建置中。"
+    },
+    "hosts": {
+      "title": "主機",
+      "description": "檢視所有後端主機的健康狀態，並控制是否接收流量。此頁面正在建置中。"
+    },
+    "templates": {
+      "title": "共用範本",
+      "description": "管理可在多個服務之間共用的登入驗證、限流、CORS、逾時與快取範本。此頁面正在建置中。"
+    },
+    "releases": {
+      "title": "發佈紀錄",
+      "description": "檢視每次發佈的版本與變更內容，必要時切回指定版本。此頁面正在建置中。"
+    }
+  },
+  "notFound": {
+    "title": "找不到頁面",
+    "description": "您要前往的頁面不存在或已移除。",
+    "back": "返回總覽"
+  },
+  "topbar": {
+    "activeVersion": "生效版本",
+    "noActiveVersion": "尚無生效版本",
+    "pendingChanges": "{{count}} 項變更尚未發佈",
+    "reviewAndPublish": "檢視並發佈",
+    "inSync": "草稿與生效版本一致",
+    "tryRequest": "試打請求",
+    "loadFailed": "版本資訊載入失敗"
+  },
+  "overview": {
+    "title": "總覽",
+    "attention": {
+      "title": "需要處理",
+      "empty": "目前沒有需要處理的事項",
+      "severity": {
+        "critical": "嚴重",
+        "warning": "警告",
+        "info": "提醒"
+      },
+      "hostUnhealthy": "主機 {{host}} 健康檢查失敗（{{service}} · {{group}} 組）",
+      "certExpiring": "{{domain}} 的 TLS 憑證將於 {{daysLeft}} 天後到期",
+      "nodeOutOfSync": "閘道節點 {{node}} 尚未同步到生效版本（目前為 {{version}}）",
+      "unpublishedChanges": "有 {{count}} 項變更尚未發佈"
+    },
+    "stats": {
+      "title": "統計",
+      "services": "服務",
+      "servicesHint": "其中 {{count}} 個僅限內網",
+      "hosts": "主機健康",
+      "hostsHint": "正常 / 總數",
+      "version": "生效版本",
+      "versionHint": "保留 {{count}} / {{max}} 版",
+      "nodes": "閘道節點同步",
+      "nodesHint": "已同步 / 總數",
+      "none": "無"
+    },
+    "nodes": {
+      "title": "閘道節點同步狀態",
+      "name": "節點",
+      "loadedVersion": "目前載入版本",
+      "status": "同步狀態",
+      "empty": "尚無閘道節點"
+    },
+    "experiments": {
+      "title": "進行中的 A/B 實驗",
+      "empty": "目前沒有進行中的實驗",
+      "service": "服務：{{name}}",
+      "variant": "{{name}} 組 {{percent}}%",
+      "unhealthyHost": "有異常主機",
+      "allHealthy": "主機正常"
+    }
+  }
+}

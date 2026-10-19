@@ -1,0 +1,18 @@
+/* Tailwind preflight 放在 Ant Design 之前，避免覆蓋元件樣式（research R5） */
+@layer theme, base, antd, components, utilities;
+
+@import "tailwindcss";
+
+@layer base {
+  /* preflight 將 svg 設為 block，lucide 圖示需維持與文字同行 */
+  svg.lucide {
+    display: inline-block;
+    vertical-align: middle;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}

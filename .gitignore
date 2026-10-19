@@ -58,5 +58,6 @@ nunit-*.xml
 
 desktop.ini
 
-yes-spec/
-
+yes-specs/
+.claude/
+.specify/
