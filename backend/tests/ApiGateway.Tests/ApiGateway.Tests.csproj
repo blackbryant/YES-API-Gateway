@@ -25,4 +25,8 @@
     <ProjectReference Include="..\..\src\ApiGateway\ApiGateway.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="wwwroot\**" Watch="false" />
+    <Watch Remove="**\desktop.ini" />
+  </ItemGroup>
 </Project>

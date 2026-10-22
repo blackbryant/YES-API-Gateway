@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Moq;
 
-namespace Backend.Unit.Tests;
+namespace ApiGateway.Tests;
 
 public class TokenServiceTests
 {

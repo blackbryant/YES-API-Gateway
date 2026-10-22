@@ -21,4 +21,9 @@
     <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <Content Update="wwwroot\**" Watch="false" />
+    <Watch Remove="**\desktop.ini" />
+  </ItemGroup>
 </Project>

@@ -36,7 +36,7 @@ do {
         }
         '2' {
             Write-Host "`n正在執行單元測試..." -ForegroundColor Yellow
-            $testProject = "backend/tests/Backend.Unit.Tests/Backend.Unit.Tests.csproj"
+            $testProject = "backend/tests/ApiGateway.Tests/ApiGateway.Tests.csproj"
             if (Test-Path $testProject) {
                 dotnet test $testProject
             } else {

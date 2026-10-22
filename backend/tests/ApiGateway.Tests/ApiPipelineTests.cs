@@ -6,7 +6,7 @@ using ApiGateway.Models.DTOs;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
-namespace Backend.Unit.Tests;
+namespace ApiGateway.Tests;
 
 /// <summary>
 /// Middleware 管線冒煙測試：不連資料庫（連線字串指向不存在的埠，背景初始化只會記警告）。

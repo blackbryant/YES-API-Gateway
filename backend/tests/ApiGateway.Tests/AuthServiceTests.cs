@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Time.Testing;
 using Moq;
 
-namespace Backend.Unit.Tests;
+namespace ApiGateway.Tests;
 
 public class AuthServiceTests
 {

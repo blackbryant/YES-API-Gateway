@@ -1,7 +1,7 @@
 using ApiGateway.Middleware;
 using Microsoft.AspNetCore.Http;
 
-namespace Backend.Unit.Tests;
+namespace ApiGateway.Tests;
 
 public class AuthMiddlewareTests
 {

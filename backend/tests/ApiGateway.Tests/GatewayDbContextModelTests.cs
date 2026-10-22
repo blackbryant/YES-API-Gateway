@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace Backend.Unit.Tests;
+namespace ApiGateway.Tests;
 
 /// <summary>以 Npgsql provider 建立模型並產生 DDL，不需實際資料庫連線</summary>
 public class GatewayDbContextModelTests

@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
-namespace Backend.Unit.Tests;
+namespace ApiGateway.Tests;
 
 public class ClustersControllerTests
 {
