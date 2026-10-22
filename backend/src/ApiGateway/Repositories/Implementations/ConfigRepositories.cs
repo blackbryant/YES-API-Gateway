@@ -45,6 +45,27 @@ public sealed class ConfigVersionRepository : IConfigVersionRepository
 
     public Task<YarpConfigVersion?> GetActiveAsync(CancellationToken ct = default) =>
         _db.ConfigVersions.AsNoTracking().FirstOrDefaultAsync(x => x.Status == ConfigVersionStatus.Active, ct);
+
+    public Task<YarpConfigVersion?> GetActiveForUpdateAsync(CancellationToken ct = default) =>
+        _db.ConfigVersions.FirstOrDefaultAsync(x => x.Status == ConfigVersionStatus.Active, ct);
+
+    public Task<string?> GetMaxVersionNoOfDayAsync(string datePrefix, CancellationToken ct = default) =>
+        _db.ConfigVersions.AsNoTracking()
+            .Where(x => x.VersionNo.StartsWith(datePrefix))
+            .OrderByDescending(x => x.VersionNo)
+            .Select(x => x.VersionNo)
+            .FirstOrDefaultAsync(ct);
+
+    public async Task<(string VersionNo, string Checksum)?> GetActiveChecksumAsync(CancellationToken ct = default)
+    {
+        var row = await _db.ConfigVersions.AsNoTracking()
+            .Where(x => x.Status == ConfigVersionStatus.Active)
+            .Select(x => new { x.VersionNo, x.Checksum })
+            .FirstOrDefaultAsync(ct);
+        return row is null ? null : (row.VersionNo, row.Checksum);
+    }
+
+    public void Add(YarpConfigVersion version) => _db.ConfigVersions.Add(version);
 }
 
 public sealed class AuditLogRepository : IAuditLogRepository

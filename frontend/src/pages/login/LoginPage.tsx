@@ -79,12 +79,6 @@ export default function LoginPage() {
             {t('login.submit')}
           </Button>
         </Form>
-
-        {import.meta.env.VITE_DATA_SOURCE === 'mock' && (
-          <Typography.Paragraph type="secondary" className="mt-4 mb-0 text-center text-xs">
-            {t('login.mockHint')}
-          </Typography.Paragraph>
-        )}
       </Card>
     </div>
   )

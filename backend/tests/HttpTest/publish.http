@@ -1,0 +1,18 @@
+### 發佈（生效）與閘道節點同步 — 請先執行 auth.http 的登入取得 Cookie
+@baseUrl = http://localhost:5072/api/v1
+
+### 發佈預覽：變更摘要 + 驗證結果（含 draftToken）
+# @name preview
+GET {{baseUrl}}/publish/preview
+
+### 發佈 → 201；驗證失敗 400（details.errors）；他人發佈中或草稿已變更 409
+POST {{baseUrl}}/publish
+Content-Type: application/json
+
+{
+  "note": "上線訂單 API",
+  "draftToken": "{{preview.response.body.data.draftToken}}"
+}
+
+### 閘道節點同步狀態（synced = 節點校驗碼等於生效版本）
+GET {{baseUrl}}/gateway-nodes

@@ -12,6 +12,9 @@ public static class PagingRules
 public static class GatewayLimits
 {
     public const long MaxRequestBodySizeBytes = 30L * 1024 * 1024;
+
+    /// <summary>代理回應移除的標頭（憲章八：不揭露伺服器資訊）</summary>
+    public static readonly string[] HiddenResponseHeaders = ["Server", "X-Powered-By"];
 }
 
 /// <summary>稽核動作（AuditLogs.Action）</summary>
@@ -24,6 +27,12 @@ public static class AuditActions
     public const string Rollback = "Rollback";
     public const string Login = "Login";
     public const string LoginFailed = "LoginFailed";
+    public const string ExperimentPause = "ExperimentPause";
+    public const string ExperimentResume = "ExperimentResume";
+    public const string ExperimentEnd = "ExperimentEnd";
+    public const string ExperimentAutoRollback = "ExperimentAutoRollback";
+    public const string ExperimentScheduleStarted = "ExperimentScheduleStarted";
+    public const string ExperimentScheduleEnded = "ExperimentScheduleEnded";
 }
 
 /// <summary>系統內建策略名稱（憲章二：不得刪除）</summary>

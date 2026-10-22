@@ -44,6 +44,7 @@ public class GatewayDbContextModelTests
     {
         using var db = CreateContext();
 
-        Assert.Equal(27, db.Model.GetEntityTypes().Count());
+        // yarp_schema_v2 共 27 表 + 001-02 新增執行期表 YarpExperimentRuntime、YarpGatewayNodes
+        Assert.Equal(29, db.Model.GetEntityTypes().Count());
     }
 }

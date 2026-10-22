@@ -1,4 +1,4 @@
-### 主機群組（範例 CRUD）— 請先執行 auth.http 的登入取得 Cookie
+### 主機群組（範例 CRUD）— 請先執行 auth.http 的登入取得 Cookie；ClusterKey 由系統產生 ULID
 @baseUrl = http://localhost:5072/api/v1
 
 ### 查詢（分頁 + 關鍵字）
@@ -10,7 +10,7 @@ POST {{baseUrl}}/clusters
 Content-Type: application/json
 
 {
-  "clusterKey": "Payment_Service_Group",
+  "displayName": "支付服務主機群組",
   "loadBalancingPolicy": "RoundRobin",
   "httpVersion": "2.0",
   "httpVersionPolicy": "RequestVersionOrLower",
@@ -30,7 +30,7 @@ PUT {{baseUrl}}/clusters/{{clusterId}}
 Content-Type: application/json
 
 {
-  "clusterKey": "Payment_Service_Group",
+  "displayName": "支付服務主機群組",
   "loadBalancingPolicy": "LeastRequests",
   "httpVersion": "2.0",
   "httpVersionPolicy": "RequestVersionOrLower",
@@ -45,7 +45,7 @@ POST {{baseUrl}}/clusters
 Content-Type: application/json
 
 {
-  "clusterKey": "Payment_Service_Group",
+  "displayName": "支付服務主機群組",
   "activityTimeoutSec": 100,
   "acceptAnyServerCertificate": false,
   "isActive": true

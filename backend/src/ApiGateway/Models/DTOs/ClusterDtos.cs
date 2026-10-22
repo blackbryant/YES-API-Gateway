@@ -6,6 +6,7 @@ namespace ApiGateway.Models.DTOs;
 public sealed record ClusterDto(
     long Id,
     string ClusterKey,
+    string DisplayName,
     string LoadBalancingPolicy,
     string HttpVersion,
     string HttpVersionPolicy,
@@ -16,9 +17,9 @@ public sealed record ClusterDto(
     string? Description,
     DateTimeOffset UpdatedAt);
 
-/// <summary>新增 / 修改主機群組</summary>
+/// <summary>新增 / 修改主機群組（ClusterKey 由系統產生 ULID，不可輸入）</summary>
 public sealed record ClusterSaveRequest(
-    string? ClusterKey,
+    string? DisplayName,
     string? LoadBalancingPolicy,
     string? HttpVersion,
     string? HttpVersionPolicy,

@@ -10,9 +10,6 @@ export const API_TIMEOUT_MS = 10000
 /** API 基底路徑 */
 export const API_BASE_PATH = '/api/v1'
 
-/** mock 資料來源模擬的網路延遲毫秒數 */
-export const MOCK_DELAY_MS = 300
-
 /** 帳號名稱最大長度 */
 export const USERNAME_MAX_LENGTH = 64
 
@@ -33,13 +30,5 @@ export const DEFAULT_LANGUAGE: Language = 'zh-TW'
 export const STORAGE_KEYS = {
   auth: 'yes.auth',
   ui: 'yes.ui',
-  mockScenario: 'yes.mock.scenario',
 } as const
 
-/** mock 資料情境：正常、空資料、載入失敗 */
-export const MOCK_SCENARIOS = ['normal', 'empty', 'error'] as const
-
-export type MockScenario = (typeof MOCK_SCENARIOS)[number]
-
-/** mock 登入時指定唯讀角色的網址查詢參數 */
-export const MOCK_ROLE_QUERY_PARAM = 'role'

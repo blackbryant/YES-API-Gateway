@@ -15,9 +15,9 @@
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    /* 實際指向由 vite.config.ts 別名決定；型別檢查以 mock 實作為準（兩者皆符合 DataSource） */
+    /* 實際指向由 vite.config.ts 別名決定（測試時改用 tests/mocks 範例資料）；型別檢查以後端實作為準 */
     "paths": {
-      "~data-source-impl": ["./src/data/mock/mockDataSource.ts"]
+      "~data-source-impl": ["./src/data/http/httpDataSource.ts"]
     },
 
     /* Linting */

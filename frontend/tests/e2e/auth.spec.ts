@@ -69,13 +69,13 @@ test.describe('登入流程（quickstart 情境 1、2、3、9、10、11、12）'
     await expect(page.getByRole('button', { name: '登入' })).toBeVisible()
   })
 
-  test('以 role=user 登入為唯讀使用者，看不到檢視並發佈', async ({ page }) => {
+  test('以 role=user 登入為唯讀使用者，看不到發佈按鈕', async ({ page }) => {
     await page.goto('/login?role=user')
     await submitLogin(page, 'viewer')
 
     const header = page.getByRole('banner')
     await expect(header).toContainText('唯讀使用者')
-    await expect(header).toContainText('3 項變更尚未發佈')
-    await expect(header.getByRole('button', { name: /檢視並發佈/ })).toHaveCount(0)
+    await expect(header).toContainText('2026101901')
+    await expect(header.getByRole('button', { name: '發佈' })).toHaveCount(0)
   })
 })

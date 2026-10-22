@@ -13,8 +13,15 @@ public class YarpCluster : AuditableEntity
     public long Id { get; set; }
 
     [MaxLength(100)]
-    [Comment("群組名稱，即 YARP 的 ClusterId")]
+    [Comment("系統產生 ULID，即 YARP 的 ClusterId")]
     public string ClusterKey { get; set; } = string.Empty;
+
+    [MaxLength(100)]
+    [Comment("畫面顯示名稱")]
+    public string DisplayName { get; set; } = string.Empty;
+
+    [Comment("由服務自動建立時的所屬服務（YarpServices.Id）")]
+    public long? OwnerServiceId { get; set; }
 
     [MaxLength(50)]
     [Comment("負載平衡策略")]

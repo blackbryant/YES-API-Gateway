@@ -49,3 +49,30 @@ Development 環境（`Database:ApplyMigrationsOnStartup=true`）啟動時會自�
 cd backend
 dotnet ef migrations script --idempotent --project src/ApiGateway --output db/02-schema.sql
 ```
+
+### 3. 閘道設定（`appsettings.json` 的 `Gateway` / `ReverseProxy` 區段）
+
+這些設定屬於閘道本身，不納入設定版本、不受資料庫影響（憲章一）：
+
+| 設定 | 預設 | 說明 |
+|---|---|---|
+| `Gateway:HealthCheck:Path` | `/health` | 系統健康檢查端點，資料庫異常或尚無生效版本時仍會回應 |
+| `Gateway:ReservedPathPrefixes` | `/health`、`/api/v1`、`/swagger` | 系統保留路徑；服務入口與其重疊時發佈驗證會擋下 |
+| `Gateway:NodeId` | 機器名稱 | 多台閘道共用同一資料庫時，各節點設定不同的識別，供「閘道節點同步狀態」判斷 |
+| `ReverseProxy:Routes` / `Clusters` | 空 | 靜態代理路由（YARP 原生格式），與服務頁發佈的動態路由並存 |
+
+服務、入口與 A/B 實驗在管理介面修改後先存為草稿，按頂部列「發佈」才會生效；各節點每 5 秒比對生效版本校驗碼自動同步，不需重啟。
+
+## 測試
+
+```powershell
+dotnet test backend/tests/ApiGateway.Tests            # 後端（不需資料庫）
+cd frontend; npm run lint; npm test; npm run i18n:check; npm run test:e2e
+```
+
+發佈交易與並發鎖定的資料庫整合測試需要實際 PostgreSQL，設定環境變數 `GATEWAY_TEST_DB`（帳號需能建立與刪除資料庫，測試會自建臨時資料庫並在結束後刪除）後才會執行，未設定時顯示為略過：
+
+```powershell
+$env:GATEWAY_TEST_DB = "Host=localhost;Port=5432;Username=<帳號>;Password=<密碼>"
+dotnet test backend/tests/ApiGateway.Tests
+```

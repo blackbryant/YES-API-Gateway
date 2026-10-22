@@ -22,13 +22,11 @@ test.describe('總覽與頂部列（quickstart 情境 4、5、6）', () => {
     await expect(row).toContainText('未同步')
   })
 
-  test('頂部列顯示生效版本與草稿提示，按鈕提示尚未開放', async ({ page }) => {
+  test('頂部列顯示生效版本，無變更時發佈按鈕停用，試打請求提示尚未開放', async ({ page }) => {
     const header = page.getByRole('banner')
     await expect(header).toContainText('2026101901')
-    await expect(header).toContainText('3 項變更尚未發佈')
-
-    await header.getByRole('button', { name: /檢視並發佈/ }).click()
-    await expect(page.getByText('此功能尚未開放').first()).toBeVisible()
+    await expect(header).toContainText('草稿與生效版本一致')
+    await expect(header.getByRole('button', { name: '發佈' })).toBeDisabled()
 
     await header.getByRole('button', { name: /試打請求/ }).click()
     await expect(page.getByText('此功能尚未開放').first()).toBeVisible()

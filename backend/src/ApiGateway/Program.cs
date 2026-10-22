@@ -1,8 +1,10 @@
 using System.Text.Json.Serialization;
 using ApiGateway.Gateway;
+using ApiGateway.Gateway.Experiments;
 using ApiGateway.Infrastructure.Auth;
 using ApiGateway.Infrastructure.Configuration;
 using ApiGateway.Infrastructure.Data;
+using ApiGateway.Infrastructure.Ids;
 using ApiGateway.Middleware;
 using ApiGateway.Models.Constants;
 using ApiGateway.Models.DTOs;
@@ -11,16 +13,19 @@ using ApiGateway.Models.Responses;
 using ApiGateway.Repositories.Implementations;
 using ApiGateway.Repositories.Interfaces;
 using ApiGateway.Services.Implementations;
+using ApiGateway.Services.Implementations.Publishing;
 using ApiGateway.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Yarp.ReverseProxy.Configuration;
+using Yarp.ReverseProxy.Transforms;
 
 const string CorsPolicyName = "FrontendClient";
 const string ConnectionStringName = "GatewayDb";
-const string HealthCheckPath = "/healthz";
+const string ReverseProxySectionName = "ReverseProxy";
 
 Log.Logger = new LoggerConfiguration().WriteTo.Console().CreateBootstrapLogger();
 
@@ -108,14 +113,48 @@ try
     builder.Services.AddScoped<IClusterRepository, ClusterRepository>();
     builder.Services.AddScoped<IClusterService, ClusterService>();
 
+    // 001-02-dynamic-routing-ab-test：發佈（驗證 → 版本 → 熱更新）、ULID
+    builder.Services.Configure<GatewayOptions>(builder.Configuration.GetSection(GatewayOptions.SectionName));
+    builder.Services.AddSingleton<ISystemIdGenerator, UlidGenerator>();
+    builder.Services.AddScoped<IConfigSnapshotRepository, ConfigSnapshotRepository>();
+    builder.Services.AddScoped<IPublishComposer, PublishComposer>();
+    builder.Services.AddScoped<IPublishService, PublishService>();
+    builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
+    builder.Services.AddScoped<IServiceReadSupport, ServiceReadSupport>();
+    builder.Services.AddScoped<IServiceService, ServiceService>();
+    builder.Services.AddSingleton<ExperimentRuntimeCache>();
+    builder.Services.AddSingleton<ExperimentMetricsCollector>();
+    builder.Services.AddSingleton<ExperimentStateReader>();
+    builder.Services.AddSingleton<IExperimentStateReader>(sp => sp.GetRequiredService<ExperimentStateReader>());
+    builder.Services.AddSingleton<IExperimentGatewayControl>(sp => sp.GetRequiredService<ExperimentStateReader>());
+    builder.Services.AddScoped<IExperimentService, ExperimentService>();
+    builder.Services.AddScoped<IGatewayNodeRepository, GatewayNodeRepository>();
+    builder.Services.AddScoped<IExperimentRuntimeRepository, ExperimentRuntimeRepository>();
+    builder.Services.AddScoped<IGatewayNodeService, GatewayNodeService>();
+    builder.Services.AddScoped<ISystemRouteService, SystemRouteService>();
+
     // ---- Gateway（YARP 動態設定）----
     builder.Services.AddSingleton<DatabaseProxyConfigProvider>();
     builder.Services.AddSingleton<IProxyConfigProvider>(sp => sp.GetRequiredService<DatabaseProxyConfigProvider>());
-    builder.Services.AddReverseProxy();
+    builder.Services.AddSingleton<IGatewayConfigApplier>(sp => sp.GetRequiredService<DatabaseProxyConfigProvider>());
+    // 靜態代理路由（appsettings ReverseProxy 區段）與資料庫動態路由兩個 Provider 並存，由 YARP 合併
+    builder.Services.AddReverseProxy()
+        .LoadFromConfig(builder.Configuration.GetSection(ReverseProxySectionName))
+        // 憲章八：代理回應一律移除後端揭露伺服器資訊的標頭
+        .AddTransforms(context =>
+        {
+            foreach (var header in GatewayLimits.HiddenResponseHeaders)
+            {
+                context.AddResponseHeaderRemove(header, ResponseCondition.Always);
+            }
+        });
 
     // 背景工作：依註冊順序啟動（先初始化資料庫，再載入生效版本）
     builder.Services.AddHostedService<DatabaseInitializer>();
     builder.Services.AddHostedService<ProxyConfigLoader>();
+    builder.Services.AddHostedService<ConfigSyncService>();
+    builder.Services.AddHostedService<AutoRollbackMonitor>();
+    builder.Services.AddHostedService<ExperimentScheduleAuditService>();
 
     var app = builder.Build();
 
@@ -144,7 +183,7 @@ try
 
     app.Use(async (context, next) =>
     {
-        if (context.Request.Path.StartsWithSegments("/api"))
+        if (context.Request.Path.StartsWithSegments(AuthRules.AdminApiPrefix))
         {
             context.Response.OnStarting(() =>
             {
@@ -165,13 +204,25 @@ try
     app.UseMiddleware<AuthMiddleware>();
 
     app.UseAuthorization();
-    app.MapControllers();
-    app.MapHealthChecks(HealthCheckPath);
-    app.MapReverseProxy();
+    // 系統端點（Admin API、健康檢查）以最優先的路由順序註冊，動態路由無法遮蔽（FR-001、FR-002）
+    var gatewayOptions = app.Services.GetRequiredService<IOptions<GatewayOptions>>().Value;
+    static void SystemEndpointOrder(EndpointBuilder endpoint) => ((RouteEndpointBuilder)endpoint).Order = RouteRules.SystemEndpointOrder;
 
-    // 未知的 /api 路徑回 404，不交給 SPA fallback
-    app.Map("/api/{**path}", (HttpContext context) =>
-        Results.Json(ApiResponse.Fail(ErrorCodes.NotFound, "API not found"), statusCode: StatusCodes.Status404NotFound));
+    app.MapControllers().Add(SystemEndpointOrder);
+    app.MapHealthChecks(gatewayOptions.HealthCheck.Path).Add(SystemEndpointOrder);
+    // 代理管線：先決定 A/B 組別（可能改送其他群組），再走 YARP 預設的會話黏性、負載平衡與被動健康檢查
+    app.MapReverseProxy(proxyPipeline =>
+    {
+        proxyPipeline.UseMiddleware<ExperimentRoutingMiddleware>();
+        proxyPipeline.UseSessionAffinity();
+        proxyPipeline.UseLoadBalancing();
+        proxyPipeline.UsePassiveHealthChecks();
+    });
+
+    // 未知的 Admin API 路徑回 404，不交給動態路由或 SPA fallback
+    app.Map(AuthRules.AdminApiPrefix + "/{**path}", (HttpContext context) =>
+        Results.Json(ApiResponse.Fail(ErrorCodes.NotFound, "API not found"), statusCode: StatusCodes.Status404NotFound))
+        .Add(SystemEndpointOrder);
     app.MapFallbackToFile("index.html", spaFileOptions);
 
     await app.RunAsync();

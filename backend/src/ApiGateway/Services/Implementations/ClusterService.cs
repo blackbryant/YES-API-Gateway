@@ -1,5 +1,6 @@
-using System.Text.RegularExpressions;
+
 using ApiGateway.Infrastructure.Data;
+using ApiGateway.Infrastructure.Ids;
 using ApiGateway.Models.Constants;
 using ApiGateway.Models.DTOs;
 using ApiGateway.Models.Entities;
@@ -23,6 +24,7 @@ public sealed partial class ClusterService : IClusterService
     private readonly IConfigDraftRepository _drafts;
     private readonly IAuditTrailService _auditTrail;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ISystemIdGenerator _idGenerator;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<ClusterService> _logger;
 
@@ -32,6 +34,7 @@ public sealed partial class ClusterService : IClusterService
         IConfigDraftRepository drafts,
         IAuditTrailService auditTrail,
         IUnitOfWork unitOfWork,
+        ISystemIdGenerator idGenerator,
         TimeProvider timeProvider,
         ILogger<ClusterService> logger)
     {
@@ -40,6 +43,7 @@ public sealed partial class ClusterService : IClusterService
         _drafts = drafts;
         _auditTrail = auditTrail;
         _unitOfWork = unitOfWork;
+        _idGenerator = idGenerator;
         _timeProvider = timeProvider;
         _logger = logger;
     }
@@ -66,13 +70,10 @@ public sealed partial class ClusterService : IClusterService
     public async Task<ClusterDto> CreateAsync(long? operatorId, ClusterSaveRequest request, CancellationToken ct = default)
     {
         var admin = await _accessControl.EnsureAdminAsync(operatorId, ct);
-        var key = ValidateSave(request);
+        ValidateSave(request);
 
-        if (await _clusters.ExistsByKeyAsync(key, null, ct))
-        {
-            throw new InvalidOperationException(ErrorCodes.ClustersKeyExists);
-        }
-
+        // ClusterId 由系統產生 ULID（FR-02-05）
+        var key = _idGenerator.NewUlid();
         var cluster = new YarpCluster { ClusterKey = key };
         Apply(cluster, request, admin.Id);
         _clusters.Add(cluster);
@@ -88,7 +89,7 @@ public sealed partial class ClusterService : IClusterService
     public async Task<ClusterDto?> UpdateAsync(long? operatorId, long id, ClusterSaveRequest request, CancellationToken ct = default)
     {
         var admin = await _accessControl.EnsureAdminAsync(operatorId, ct);
-        var key = ValidateSave(request);
+        ValidateSave(request);
 
         var cluster = await _clusters.GetForUpdateAsync(id, ct);
         if (cluster is null)
@@ -96,20 +97,14 @@ public sealed partial class ClusterService : IClusterService
             return null;
         }
 
-        if (await _clusters.ExistsByKeyAsync(key, id, ct))
-        {
-            throw new InvalidOperationException(ErrorCodes.ClustersKeyExists);
-        }
-
         var before = ToDto(cluster);
-        cluster.ClusterKey = key;
         Apply(cluster, request, admin.Id);
 
         await _drafts.MarkDirtyAsync(admin.Id, _timeProvider.GetUtcNow(), ct);
-        _auditTrail.Record(AuditActions.Update, AuditEntityType, key, admin.Id, before, ToDto(cluster));
+        _auditTrail.Record(AuditActions.Update, AuditEntityType, cluster.ClusterKey, admin.Id, before, ToDto(cluster));
         await SaveAsync(ct);
 
-        _logger.LogInformation("主機群組已修改 {ClusterKey} by {UserId}", key, admin.Id);
+        _logger.LogInformation("主機群組已修改 {ClusterKey} by {UserId}", cluster.ClusterKey, admin.Id);
         return ToDto(cluster);
     }
 
@@ -158,13 +153,12 @@ public sealed partial class ClusterService : IClusterService
         }
     }
 
-    /// <summary>驗證並回傳正規化後的 ClusterKey</summary>
-    private static string ValidateSave(ClusterSaveRequest request)
+    private static void ValidateSave(ClusterSaveRequest request)
     {
-        var key = request.ClusterKey?.Trim() ?? string.Empty;
-        if (key.Length == 0 || key.Length > ClusterRules.KeyMaxLength || !ClusterKeyRegex().IsMatch(key))
+        var displayName = request.DisplayName?.Trim() ?? string.Empty;
+        if (displayName.Length == 0 || displayName.Length > ClusterRules.DisplayNameMaxLength)
         {
-            throw new ArgumentException(ErrorCodes.ClustersKeyInvalid);
+            throw new ArgumentException(ErrorCodes.ClustersDisplayNameInvalid);
         }
 
         if (request.LoadBalancingPolicy is not null && !ClusterRules.LoadBalancingPolicyOptions.Contains(request.LoadBalancingPolicy))
@@ -196,12 +190,11 @@ public sealed partial class ClusterService : IClusterService
         {
             throw new ArgumentException(ErrorCodes.ClustersDescriptionTooLong);
         }
-
-        return key;
     }
 
     private static void Apply(YarpCluster cluster, ClusterSaveRequest request, long operatorId)
     {
+        cluster.DisplayName = request.DisplayName!.Trim();
         cluster.LoadBalancingPolicy = request.LoadBalancingPolicy ?? ClusterRules.DefaultLoadBalancingPolicy;
         cluster.HttpVersion = request.HttpVersion ?? ClusterRules.DefaultHttpVersion;
         cluster.HttpVersionPolicy = request.HttpVersionPolicy ?? ClusterRules.DefaultHttpVersionPolicy;
@@ -216,6 +209,7 @@ public sealed partial class ClusterService : IClusterService
     private static ClusterDto ToDto(YarpCluster c) => new(
         c.Id,
         c.ClusterKey,
+        c.DisplayName,
         c.LoadBalancingPolicy,
         c.HttpVersion,
         c.HttpVersionPolicy,
@@ -225,7 +219,4 @@ public sealed partial class ClusterService : IClusterService
         c.IsActive,
         c.Description,
         c.UpdatedAt);
-
-    [GeneratedRegex(ClusterRules.KeyPattern)]
-    private static partial Regex ClusterKeyRegex();
 }

@@ -28,4 +28,39 @@ public static class ErrorCodes
     public const string ClustersMaxConnectionsInvalid = "CLUSTERS_MAX_CONNECTIONS_INVALID";
     public const string ClustersDescriptionTooLong = "CLUSTERS_DESCRIPTION_TOO_LONG";
     public const string ClustersInUse = "CLUSTERS_IN_USE";
+    public const string ClustersDisplayNameInvalid = "CLUSTERS_DISPLAY_NAME_INVALID";
+
+    // 服務、入口、主機
+    public const string ServicesNotFound = "SERVICES_NOT_FOUND";
+    public const string ServicesKeyInvalid = "SERVICES_KEY_INVALID";
+    public const string ServicesKeyExists = "SERVICES_KEY_EXISTS";
+    public const string ServicesKeyImmutable = "SERVICES_KEY_IMMUTABLE";
+    public const string ServicesDisplayNameInvalid = "SERVICES_DISPLAY_NAME_INVALID";
+    public const string ServicesTagsInvalid = "SERVICES_TAGS_INVALID";
+    public const string ServicesDescriptionTooLong = "SERVICES_DESCRIPTION_TOO_LONG";
+    public const string ServicesRoutesRequired = "SERVICES_ROUTES_REQUIRED";
+    public const string ServicesHostsRequired = "SERVICES_HOSTS_REQUIRED";
+    public const string ServicesRoutingModeInvalid = "SERVICES_ROUTING_MODE_INVALID";
+    public const string RoutesNotFound = "ROUTES_NOT_FOUND";
+    public const string RoutesPathInvalid = "ROUTES_PATH_INVALID";
+    public const string RoutesHostInvalid = "ROUTES_HOST_INVALID";
+    public const string RoutesMethodInvalid = "ROUTES_METHOD_INVALID";
+    public const string RoutesOrderInvalid = "ROUTES_ORDER_INVALID";
+    public const string RoutesPrefixInvalid = "ROUTES_PREFIX_INVALID";
+    public const string HostsAddressInvalid = "HOSTS_ADDRESS_INVALID";
+    public const string HostsNotFound = "HOSTS_NOT_FOUND";
+
+    // A/B 實驗
+    public const string ExperimentsInvalid = "EXPERIMENTS_INVALID";
+    public const string ExperimentsNotFound = "EXPERIMENTS_NOT_FOUND";
+    public const string ExperimentsActionInvalid = "EXPERIMENTS_ACTION_INVALID";
+
+    // 發佈
+    public const string PublishNoteRequired = "PUBLISH_NOTE_REQUIRED";
+    public const string PublishNoChanges = "PUBLISH_NO_CHANGES";
+    public const string PublishValidationFailed = "PUBLISH_VALIDATION_FAILED";
+    public const string PublishInProgress = "PUBLISH_IN_PROGRESS";
+    public const string PublishDraftChanged = "PUBLISH_DRAFT_CHANGED";
+    public const string PublishDailyLimit = "PUBLISH_DAILY_LIMIT";
+    public const string PublishStorageUnavailable = "PUBLISH_STORAGE_UNAVAILABLE";
 }

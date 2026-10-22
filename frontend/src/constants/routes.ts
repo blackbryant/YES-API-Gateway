@@ -3,6 +3,8 @@ export const ROUTES = {
   login: '/login',
   overview: '/',
   services: '/services',
+  serviceNew: '/services/new',
+  serviceDetail: '/services/:id',
   hosts: '/hosts',
   templates: '/templates',
   releases: '/releases',
@@ -10,3 +12,6 @@ export const ROUTES = {
 } as const
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES]
+
+/** 服務頁路徑 */
+export const serviceDetailPath = (id: number | string) => `${ROUTES.services}/${id}`

@@ -27,15 +27,28 @@
     "empty": "目前沒有資料",
     "loadFailed": "資料載入失敗",
     "notAvailable": "此功能尚未開放",
-    "goTo": "前往"
+    "goTo": "前往",
+    "save": "儲存",
+    "cancel": "取消",
+    "delete": "刪除",
+    "edit": "編輯",
+    "add": "新增",
+    "back": "返回",
+    "next": "下一步",
+    "prev": "上一步",
+    "confirm": "確認",
+    "saved": "已儲存",
+    "actionFailed": "操作失敗，請稍後再試",
+    "advanced": "進階資訊",
+    "yes": "是",
+    "no": "否"
   },
   "login": {
     "title": "登入管理介面",
     "username": "帳號",
     "password": "密碼",
     "submit": "登入",
-    "failed": "登入失敗，請確認帳號密碼後再試一次",
-    "mockHint": "開發模式：任意帳號密碼皆可登入；網址加上 ?role=user 可用唯讀角色登入"
+    "failed": "登入失敗，請確認帳號密碼後再試一次"
   },
   "user": {
     "menu": "使用者選單",
@@ -91,10 +104,6 @@
     "badge": "建置中"
   },
   "pages": {
-    "services": {
-      "title": "服務",
-      "description": "集中管理每支對外 API 的入口、防護、處理、分流與後端設定。此頁面正在建置中。"
-    },
     "hosts": {
       "title": "主機",
       "description": "檢視所有後端主機的健康狀態，並控制是否接收流量。此頁面正在建置中。"
@@ -117,10 +126,11 @@
     "activeVersion": "生效版本",
     "noActiveVersion": "尚無生效版本",
     "pendingChanges": "{{count}} 項變更尚未發佈",
-    "reviewAndPublish": "檢視並發佈",
     "inSync": "草稿與生效版本一致",
     "tryRequest": "試打請求",
-    "loadFailed": "版本資訊載入失敗"
+    "loadFailed": "版本資訊載入失敗",
+    "publish": "發佈",
+    "noChanges": "沒有未發佈的變更"
   },
   "overview": {
     "title": "總覽",
@@ -135,7 +145,8 @@
       "hostUnhealthy": "主機 {{host}} 健康檢查失敗（{{service}} · {{group}} 組）",
       "certExpiring": "{{domain}} 的 TLS 憑證將於 {{daysLeft}} 天後到期",
       "nodeOutOfSync": "閘道節點 {{node}} 尚未同步到生效版本（目前為 {{version}}）",
-      "unpublishedChanges": "有 {{count}} 項變更尚未發佈"
+      "unpublishedChanges": "有 {{count}} 項變更尚未發佈",
+      "experimentAutoRolledBack": "{{service}} 的 A/B 實驗已自動回退到對照組"
     },
     "stats": {
       "title": "統計",
@@ -164,5 +175,219 @@
       "unhealthyHost": "有異常主機",
       "allHealthy": "主機正常"
     }
+  },
+  "services": {
+    "title": "服務",
+    "add": "新增服務",
+    "emptyHint": "目前還沒有服務，點「新增服務」建立第一支對外 API",
+    "searchPlaceholder": "搜尋名稱、代碼、網域或路徑",
+    "tagFilter": "標籤",
+    "draftSaved": "已存為草稿，按右上角「發佈」後生效",
+    "deleted": "服務已刪除",
+    "deleteConfirm": "確定刪除服務「{{name}}」？入口與系統建立的主機群組會一併刪除，發佈後生效。",
+    "unpublished": "未發佈",
+    "columns": {
+      "name": "名稱",
+      "serviceKey": "服務代碼",
+      "hosts": "網域",
+      "routeCount": "入口數",
+      "routingMode": "分流方式",
+      "status": "狀態"
+    },
+    "status": {
+      "active": "啟用",
+      "inactive": "停用"
+    },
+    "routingMode": {
+      "Single": "不分流",
+      "AbTest": "A/B 測試"
+    },
+    "fields": {
+      "displayName": "服務名稱",
+      "serviceKey": "服務代碼",
+      "serviceKeyHint": "小寫英數與連字號，建立後不可修改",
+      "tags": "標籤",
+      "description": "備註",
+      "isActive": "啟用"
+    },
+    "wizard": {
+      "title": "新增服務",
+      "steps": {
+        "basic": "基本資料",
+        "entries": "入口",
+        "hosts": "主機"
+      },
+      "submit": "建立服務"
+    },
+    "flow": {
+      "entry": "入口",
+      "protection": "防護",
+      "processing": "處理",
+      "split": "分流",
+      "backend": "後端"
+    },
+    "entry": {
+      "title": "入口清單",
+      "add": "新增入口",
+      "path": "路徑",
+      "pathHint": "例：/api/orders/{**catch-all}",
+      "pathHelp": "以 / 開頭。{id} 比對單一段、{**catch-all} 比對其後所有路徑，例：/api/orders/{id}、/api/orders/{**catch-all}",
+      "hosts": "網域",
+      "hostsHint": "例：api.example.com",
+      "hostsHelp": "用戶端連線的網域，可輸入多個（Enter、逗號或空白分隔），未填代表所有網域。例：api.example.com、*.example.com、api.example.com:8443",
+      "methods": "允許的方法",
+      "methodsHint": "不選 = 全部方法",
+      "allMethods": "全部",
+      "order": "優先順序",
+      "orderHint": "數字越小越優先（0 ～ 10000）",
+      "routeKey": "路由名稱",
+      "isActive": "啟用",
+      "overlapWarning": "入口 {{a}} 與 {{b}} 路徑相同，請調整優先順序；發佈時會再次驗證",
+      "minOne": "至少需要一個入口"
+    },
+    "processing": {
+      "removePrefix": "轉送時移除路徑前綴",
+      "prefix": "要移除的前綴",
+      "example": "範例：{{before}} → 後端收到 {{after}}"
+    },
+    "backend": {
+      "hosts": "主機",
+      "address": "主機位址",
+      "addressHint": "例：http://10.0.0.11:8080",
+      "addHost": "新增主機",
+      "receiving": "接收流量",
+      "receivingHelp": "「接收流量」不是方向，是這台主機是否分配請求：關閉後設定保留但不轉送（適合維護、更新或暫時隔離），發佈後生效；每組至少需一台開啟。例：http://10.10.10.8/human [開] 分到請求、http://10.10.10.9/human [關] 暫停",
+      "clusterId": "主機群組識別碼（ClusterId）",
+      "groupHosts": "{{group}} 組主機",
+      "minOne": "至少需要一台主機"
+    },
+    "systemRoutes": {
+      "title": "系統路由（唯讀）",
+      "description": "以下路徑由閘道設定檔定義，不受發佈影響，動態入口不得使用。",
+      "healthCheck": "健康檢查",
+      "reserved": "系統保留路徑",
+      "static": "靜態代理路由",
+      "none": "無"
+    }
+  },
+  "split": {
+    "mode": "分流方式",
+    "variants": "組別與流量比例",
+    "group": "{{key}} 組",
+    "control": "對照組",
+    "addGroup": "新增組別",
+    "weightSumError": "各組比例加總必須為 100（目前 {{sum}}）",
+    "enabled": "啟用實驗",
+    "stickyDays": "黏著天數",
+    "stickyHint": "同一用戶端在天數內維持同一組；0 = 不黏著",
+    "forceHeader": "強制分組標頭",
+    "forceHeaderHint": "帶此標頭（值為組別代號，如 B）即強制進入該組",
+    "schedule": "排程",
+    "startAt": "開始時間",
+    "endAt": "結束時間",
+    "rollback": "自動回退",
+    "rollbackEnabled": "啟用自動回退",
+    "threshold": "5xx 比率門檻（%）",
+    "duration": "持續分鐘",
+    "minSamples": "最低樣本數",
+    "rollbackHint": "非對照組 5xx 比率連續超過門檻時，自動將全部流量切回對照組",
+    "actions": {
+      "Pause": "暫停",
+      "Resume": "恢復",
+      "End": "結束"
+    },
+    "endConfirm": "結束後需修改設定並重新發佈才可再次執行，確定結束？",
+    "actionDone": "實驗已{{action}}"
+  },
+  "experiment": {
+    "status": {
+      "Draft": "草稿",
+      "Scheduled": "已排程",
+      "Running": "執行中",
+      "Paused": "已暫停",
+      "Ended": "已結束",
+      "AutoRolledBack": "已自動回退"
+    }
+  },
+  "publish": {
+    "title": "發佈設定",
+    "loading": "正在檢查變更…",
+    "base": "基礎版本：{{version}}",
+    "changes": "本次變更（{{count}}）",
+    "noChanges": "沒有可發佈的變更",
+    "issues": "需要先修正的問題（{{count}}）",
+    "note": "發佈說明",
+    "notePlaceholder": "說明本次變更內容（必填）",
+    "noteRequired": "請填寫發佈說明",
+    "submit": "發佈",
+    "success": "已發佈版本 {{version}}",
+    "draftChanged": "變更內容已更新，請重新確認",
+    "inProgress": "其他管理者正在發佈，請稍後再試",
+    "otherService": "其他",
+    "action": {
+      "Added": "新增",
+      "Modified": "修改",
+      "Removed": "刪除"
+    },
+    "entity": {
+      "Service": "服務",
+      "Route": "入口",
+      "Experiment": "A/B 實驗",
+      "Cluster": "主機群組",
+      "Host": "主機"
+    }
+  },
+  "issues": {
+    "ROUTE_PATH_INVALID": "入口 {{routeKey}} 的路徑格式錯誤",
+    "ROUTE_HOST_INVALID": "入口 {{routeKey}} 的網域 {{host}} 格式錯誤",
+    "ROUTE_METHOD_INVALID": "入口 {{routeKey}} 含不支援的方法 {{method}}",
+    "ROUTE_ORDER_INVALID": "入口 {{routeKey}} 的優先順序必須介於 0 ～ 10000",
+    "ROUTE_RESERVED_PATH": "入口 {{routeKey}} 的路徑與系統保留路徑 {{reserved}} 重疊",
+    "ROUTE_ROOT_CATCHALL_WITHOUT_HOST": "入口 {{routeKey}} 攔截所有路徑時必須指定網域",
+    "ROUTE_CONFLICT": "入口 {{routeKey}} 與 {{other}} 的路徑、網域、方法與優先順序完全相同",
+    "ROUTE_NO_TARGET": "入口 {{routeKey}} 沒有導向任何主機",
+    "TARGET_CLUSTER_MISSING": "導向的主機群組不存在或已停用",
+    "TARGET_CLUSTER_NO_ACTIVE_HOST": "主機群組沒有接收流量的主機",
+    "EXPERIMENT_WEIGHT_SUM": "A/B 實驗各組比例加總為 {{sum}}，必須為 100",
+    "EXPERIMENT_VARIANT_COUNT": "A/B 實驗需要 2 ～ 5 組（目前 {{count}} 組）",
+    "EXPERIMENT_CONTROL": "A/B 實驗必須恰好有一組對照組",
+    "EXPERIMENT_TIME_RANGE": "A/B 實驗的結束時間必須晚於開始時間",
+    "EXPERIMENT_ENDED": "A/B 實驗的結束時間已過",
+    "EXPERIMENT_ROLLBACK_RULE": "A/B 實驗的自動回退條件不正確",
+    "YARP_CONFIG_INVALID": "閘道設定驗證失敗：{{message}}",
+    "unknown": "設定驗證失敗（{{code}}）"
+  },
+  "errors": {
+    "SERVICES_KEY_INVALID": "服務代碼只能使用小寫英數與連字號（2 ～ 63 字）",
+    "SERVICES_KEY_EXISTS": "服務代碼已被使用",
+    "SERVICES_KEY_IMMUTABLE": "服務代碼建立後不可修改",
+    "SERVICES_DISPLAY_NAME_INVALID": "請輸入服務名稱（最多 100 字）",
+    "SERVICES_TAGS_INVALID": "標籤最多 10 個，每個最多 30 字",
+    "SERVICES_DESCRIPTION_TOO_LONG": "備註最多 500 字",
+    "SERVICES_ROUTES_REQUIRED": "至少需要一個入口",
+    "SERVICES_HOSTS_REQUIRED": "至少需要一台主機",
+    "SERVICES_ROUTING_MODE_INVALID": "分流設定不完整",
+    "SERVICES_NOT_FOUND": "找不到服務",
+    "ROUTES_NOT_FOUND": "找不到入口",
+    "ROUTES_PATH_INVALID": "路徑格式錯誤，須以 / 開頭",
+    "ROUTES_HOST_INVALID": "網域格式錯誤",
+    "ROUTES_METHOD_INVALID": "包含不支援的 HTTP 方法",
+    "ROUTES_ORDER_INVALID": "優先順序必須介於 0 ～ 10000",
+    "ROUTES_PREFIX_INVALID": "移除的前綴必須是路徑開頭的固定部分",
+    "HOSTS_ADDRESS_INVALID": "主機位址必須是 http:// 或 https:// 開頭的完整網址",
+    "HOSTS_NOT_FOUND": "找不到主機",
+    "CLUSTERS_IN_USE": "主機群組仍被其他服務使用",
+    "CLUSTERS_DISPLAY_NAME_INVALID": "請輸入主機群組名稱",
+    "EXPERIMENTS_INVALID": "A/B 實驗設定不正確（比例加總須為 100、2 ～ 5 組且恰好一組對照組）",
+    "EXPERIMENTS_NOT_FOUND": "實驗尚未發佈",
+    "EXPERIMENTS_ACTION_INVALID": "此狀態無法執行這個操作",
+    "PUBLISH_NOTE_REQUIRED": "請填寫發佈說明",
+    "PUBLISH_NO_CHANGES": "沒有可發佈的變更",
+    "PUBLISH_VALIDATION_FAILED": "設定驗證失敗",
+    "PUBLISH_IN_PROGRESS": "其他管理者正在發佈，請稍後再試",
+    "PUBLISH_DRAFT_CHANGED": "變更內容已更新，請重新確認",
+    "PUBLISH_DAILY_LIMIT": "今日發佈次數已達上限（99 版）",
+    "PUBLISH_STORAGE_UNAVAILABLE": "資料庫暫時無法連線，閘道維持原設定",
+    "COMMON_FORBIDDEN": "您沒有執行此操作的權限"
   }
 }

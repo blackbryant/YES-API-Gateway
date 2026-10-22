@@ -13,6 +13,17 @@ public interface IConfigDraftRepository
 public interface IConfigVersionRepository
 {
     Task<YarpConfigVersion?> GetActiveAsync(CancellationToken ct = default);
+
+    /// <summary>生效版本（追蹤中，發佈時改為 History）</summary>
+    Task<YarpConfigVersion?> GetActiveForUpdateAsync(CancellationToken ct = default);
+
+    /// <summary>指定日期前綴（YYYYMMDD）的最大版本號</summary>
+    Task<string?> GetMaxVersionNoOfDayAsync(string datePrefix, CancellationToken ct = default);
+
+    /// <summary>只查生效版本的版本號與校驗碼（多節點輪詢用）</summary>
+    Task<(string VersionNo, string Checksum)?> GetActiveChecksumAsync(CancellationToken ct = default);
+
+    void Add(YarpConfigVersion version);
 }
 
 public interface IAuditLogRepository

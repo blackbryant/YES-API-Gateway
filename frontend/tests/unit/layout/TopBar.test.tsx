@@ -9,7 +9,7 @@ import { useUiStore } from '../../../src/stores/uiStore'
 import { renderWithProviders } from '../test-utils'
 
 vi.mock('../../../src/data/dataSource', () => ({
-  dataSource: { getDraftStatus: vi.fn(), logout: vi.fn() },
+  dataSource: { getDraftStatus: vi.fn(), logout: vi.fn(), getPublishPreview: vi.fn(), publish: vi.fn() },
 }))
 
 const getDraftStatus = vi.mocked(dataSource.getDraftStatus)
@@ -30,15 +30,15 @@ describe('TopBar 草稿狀態', () => {
 
     expect(await screen.findByText('2026101901')).toBeInTheDocument()
     expect(screen.getByText('3 項變更尚未發佈')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /檢視並發佈/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '發佈' })).toBeEnabled()
   })
 
-  it('沒有變更時顯示草稿與生效版本一致，且不顯示檢視並發佈', async () => {
+  it('沒有變更時顯示草稿與生效版本一致，發佈按鈕常駐但停用', async () => {
     getDraftStatus.mockResolvedValue({ activeVersion: '2026101901', pendingChanges: 0 })
     renderWithProviders(<TopBar />)
 
     expect(await screen.findByText('草稿與生效版本一致')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /檢視並發佈/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '發佈' })).toBeDisabled()
   })
 
   it('尚無生效版本時顯示提示', async () => {
@@ -48,15 +48,21 @@ describe('TopBar 草稿狀態', () => {
     expect(await screen.findByText('尚無生效版本')).toBeInTheDocument()
   })
 
-  it('點試打請求與檢視並發佈顯示尚未開放', async () => {
+  it('點發佈開啟發佈對話框', async () => {
+    getDraftStatus.mockResolvedValue({ activeVersion: '2026101901', pendingChanges: 3 })
+    vi.mocked(dataSource.getPublishPreview).mockResolvedValue({ baseVersion: '2026101901', draftToken: '1', changes: [], issues: [], canPublish: false })
+    renderWithProviders(<TopBar />)
+
+    await userEvent.click(await screen.findByRole('button', { name: '發佈' }))
+    expect(await screen.findByRole('dialog', { name: '發佈設定' })).toBeInTheDocument()
+  })
+
+  it('點試打請求顯示尚未開放', async () => {
     getDraftStatus.mockResolvedValue({ activeVersion: '2026101901', pendingChanges: 3 })
     renderWithProviders(<TopBar />)
 
-    await userEvent.click(await screen.findByRole('button', { name: /檢視並發佈/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /試打請求/ }))
     expect(await screen.findByText('此功能尚未開放')).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: /試打請求/ }))
-    expect((await screen.findAllByText('此功能尚未開放')).length).toBeGreaterThan(0)
   })
 })
 
@@ -67,12 +73,12 @@ describe('TopBar 使用者與角色', () => {
     useUiStore.getState().setLanguage('zh-TW')
   })
 
-  it('唯讀使用者看不到檢視並發佈', async () => {
+  it('唯讀使用者看不到發佈按鈕', async () => {
     setSession('user')
     renderWithProviders(<TopBar />)
 
     expect(await screen.findByText('3 項變更尚未發佈')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /檢視並發佈/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '發佈' })).not.toBeInTheDocument()
   })
 
   it('顯示帳號與角色，使用者選單含語系切換與登出', async () => {

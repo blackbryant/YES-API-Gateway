@@ -1,0 +1,94 @@
+### 服務（入口、主機、A/B 分流）與發佈 — 請先執行 auth.http 的登入取得 Cookie
+@baseUrl = http://localhost:5072/api/v1
+
+### 新增服務（單一主機群組）→ 201，存為草稿
+# @name createService
+POST {{baseUrl}}/services
+Content-Type: application/json
+
+{
+  "serviceKey": "orders-api",
+  "displayName": "訂單 API",
+  "tags": ["order"],
+  "isActive": true,
+  "description": null,
+  "routes": [
+    {
+      "id": null,
+      "matchPath": "/api/orders/{**catch-all}",
+      "matchHosts": ["api.example.com"],
+      "matchMethods": ["GET", "POST"],
+      "order": 100,
+      "pathRemovePrefix": "/api/orders",
+      "isActive": true,
+      "description": null
+    }
+  ],
+  "routingMode": "Single",
+  "hosts": [{ "id": null, "address": "http://localhost:9001", "isActive": true }],
+  "experiment": null
+}
+
+### 取得服務詳細
+@serviceId = {{createService.response.body.data.id}}
+GET {{baseUrl}}/services/{{serviceId}}
+
+### 服務列表（關鍵字比對名稱、代碼、網域、路徑）
+GET {{baseUrl}}/services?keyword=orders&pageIndex=1&pageSize=20
+
+### 改為 A/B 測試（A 組 90%、B 組 10%，強制分組標頭 X-Exp-Group）
+PUT {{baseUrl}}/services/{{serviceId}}
+Content-Type: application/json
+
+{
+  "serviceKey": "orders-api",
+  "displayName": "訂單 API",
+  "tags": ["order"],
+  "isActive": true,
+  "routes": [
+    {
+      "id": {{createService.response.body.data.routes[0].id}},
+      "matchPath": "/api/orders/{**catch-all}",
+      "matchHosts": ["api.example.com"],
+      "matchMethods": ["GET", "POST"],
+      "order": 100,
+      "pathRemovePrefix": "/api/orders",
+      "isActive": true
+    }
+  ],
+  "routingMode": "AbTest",
+  "experiment": {
+    "enabled": true,
+    "stickyDays": 7,
+    "startAt": null,
+    "endAt": null,
+    "autoRollback": { "thresholdPercent": 2, "durationMin": 5, "minSamples": 100 },
+    "variants": [
+      { "variantKey": "A", "weightPercent": 90, "isControl": true, "hosts": [{ "id": null, "address": "http://localhost:9001", "isActive": true }] },
+      { "variantKey": "B", "weightPercent": 10, "isControl": false, "hosts": [{ "id": null, "address": "http://localhost:9002", "isActive": true }] }
+    ],
+    "forceRules": [{ "matchType": "Header", "matchName": "X-Exp-Group", "matchValue": null, "variantKey": null }]
+  }
+}
+
+### 停用服務 → 204
+PUT {{baseUrl}}/services/{{serviceId}}/active
+Content-Type: application/json
+
+{ "isActive": false }
+
+### 刪除服務 → 204
+DELETE {{baseUrl}}/services/{{serviceId}}
+
+### 發佈預覽：變更摘要 + 驗證結果
+# @name preview
+GET {{baseUrl}}/publish/preview
+
+### 發佈（生效）→ 201；draftToken 取自預覽
+POST {{baseUrl}}/publish
+Content-Type: application/json
+
+{
+  "note": "上線訂單 API",
+  "draftToken": "{{preview.response.body.data.draftToken}}"
+}

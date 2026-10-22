@@ -25,7 +25,7 @@ public class ClustersControllerTests
 
     private static ClusterSaveRequest Request() => new("G", null, null, null, 100, null, false, true, null);
 
-    private static ClusterDto Dto() => new(1, "G", "RoundRobin", "2.0", "RequestVersionOrLower", 100, null, false, true, null, DateTimeOffset.UtcNow);
+    private static ClusterDto Dto() => new(1, "01JC0000000000000000000001", "G", "RoundRobin", "2.0", "RequestVersionOrLower", 100, null, false, true, null, DateTimeOffset.UtcNow);
 
     private static int? StatusOf(IActionResult result) => result switch
     {

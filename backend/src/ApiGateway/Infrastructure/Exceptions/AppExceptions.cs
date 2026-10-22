@@ -9,6 +9,18 @@ public sealed class AuthenticationFailedException : Exception
     }
 }
 
+/// <summary>發佈驗證失敗（PUBLISH_VALIDATION_FAILED → 400，details.errors 為驗證錯誤清單）</summary>
+public sealed class PublishValidationException : Exception
+{
+    public PublishValidationException(IReadOnlyList<Models.DTOs.ValidationIssue> issues)
+        : base(Models.DTOs.ErrorCodes.PublishValidationFailed)
+    {
+        Issues = issues;
+    }
+
+    public IReadOnlyList<Models.DTOs.ValidationIssue> Issues { get; }
+}
+
 /// <summary>多欄位驗證錯誤；由 ErrorHandlingMiddleware 轉成 400，Errors 放在回應 details</summary>
 public sealed class RequestValidationException : Exception
 {

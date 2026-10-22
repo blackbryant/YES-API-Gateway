@@ -27,15 +27,28 @@
     "empty": "No data yet",
     "loadFailed": "Failed to load data",
     "notAvailable": "This feature is not available yet",
-    "goTo": "Go"
+    "goTo": "Go",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "back": "Back",
+    "next": "Next",
+    "prev": "Previous",
+    "confirm": "Confirm",
+    "saved": "Saved",
+    "actionFailed": "Operation failed. Please try again later.",
+    "advanced": "Advanced",
+    "yes": "Yes",
+    "no": "No"
   },
   "login": {
     "title": "Sign in to the console",
     "username": "Username",
     "password": "Password",
     "submit": "Sign in",
-    "failed": "Sign-in failed. Check your username and password and try again.",
-    "mockHint": "Development mode: any username and password works; add ?role=user to the URL to sign in as read-only"
+    "failed": "Sign-in failed. Check your username and password and try again."
   },
   "user": {
     "menu": "User menu",
@@ -91,10 +104,6 @@
     "badge": "Coming soon"
   },
   "pages": {
-    "services": {
-      "title": "Services",
-      "description": "Manage each public API's entry, protection, processing, traffic split and backend settings in one place. This page is under construction."
-    },
     "hosts": {
       "title": "Hosts",
       "description": "View the health of every backend host and control whether it receives traffic. This page is under construction."
@@ -117,10 +126,11 @@
     "activeVersion": "Active version",
     "noActiveVersion": "No active version",
     "pendingChanges": "{{count}} unpublished changes",
-    "reviewAndPublish": "Review & publish",
     "inSync": "Draft matches the active version",
     "tryRequest": "Test request",
-    "loadFailed": "Failed to load version info"
+    "loadFailed": "Failed to load version info",
+    "publish": "Publish",
+    "noChanges": "No unpublished changes"
   },
   "overview": {
     "title": "Overview",
@@ -135,7 +145,8 @@
       "hostUnhealthy": "Host {{host}} failed health checks ({{service}} · group {{group}})",
       "certExpiring": "TLS certificate for {{domain}} expires in {{daysLeft}} days",
       "nodeOutOfSync": "Gateway node {{node}} has not synced to the active version (currently {{version}})",
-      "unpublishedChanges": "{{count}} changes have not been published"
+      "unpublishedChanges": "{{count}} changes have not been published",
+      "experimentAutoRolledBack": "The A/B experiment of {{service}} was rolled back to the control group"
     },
     "stats": {
       "title": "Statistics",
@@ -164,5 +175,219 @@
       "unhealthyHost": "Unhealthy host",
       "allHealthy": "Hosts healthy"
     }
+  },
+  "services": {
+    "title": "Services",
+    "add": "Add service",
+    "emptyHint": "No services yet. Click \"Add service\" to create your first API.",
+    "searchPlaceholder": "Search name, key, domain or path",
+    "tagFilter": "Tag",
+    "draftSaved": "Saved as draft. Click \"Publish\" at the top right to apply.",
+    "deleted": "Service deleted",
+    "deleteConfirm": "Delete service \"{{name}}\"? Its entries and system-created host groups are removed when published.",
+    "unpublished": "Unpublished",
+    "columns": {
+      "name": "Name",
+      "serviceKey": "Service key",
+      "hosts": "Domains",
+      "routeCount": "Entries",
+      "routingMode": "Traffic split",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "routingMode": {
+      "Single": "No split",
+      "AbTest": "A/B test"
+    },
+    "fields": {
+      "displayName": "Service name",
+      "serviceKey": "Service key",
+      "serviceKeyHint": "Lowercase letters, digits and hyphens; cannot be changed later",
+      "tags": "Tags",
+      "description": "Notes",
+      "isActive": "Active"
+    },
+    "wizard": {
+      "title": "Add service",
+      "steps": {
+        "basic": "Basics",
+        "entries": "Entries",
+        "hosts": "Hosts"
+      },
+      "submit": "Create service"
+    },
+    "flow": {
+      "entry": "Entry",
+      "protection": "Protection",
+      "processing": "Processing",
+      "split": "Traffic split",
+      "backend": "Backend"
+    },
+    "entry": {
+      "title": "Entries",
+      "add": "Add entry",
+      "path": "Path",
+      "pathHint": "e.g. /api/orders/{**catch-all}",
+      "pathHelp": "Starts with /. {id} matches one segment, {**catch-all} matches everything after it, e.g. /api/orders/{id}, /api/orders/{**catch-all}",
+      "hosts": "Domains",
+      "hostsHint": "e.g. api.example.com",
+      "hostsHelp": "Domains clients connect with. Multiple allowed (Enter, comma or space); empty means all domains. e.g. api.example.com, *.example.com, api.example.com:8443",
+      "methods": "Allowed methods",
+      "methodsHint": "None selected = all methods",
+      "allMethods": "All",
+      "order": "Priority",
+      "orderHint": "Lower numbers match first (0 – 10000)",
+      "routeKey": "Route name",
+      "isActive": "Active",
+      "overlapWarning": "Entries {{a}} and {{b}} share the same path. Adjust their priority; publishing validates again.",
+      "minOne": "At least one entry is required"
+    },
+    "processing": {
+      "removePrefix": "Remove path prefix when forwarding",
+      "prefix": "Prefix to remove",
+      "example": "Example: {{before}} → backend receives {{after}}"
+    },
+    "backend": {
+      "hosts": "Hosts",
+      "address": "Host address",
+      "addressHint": "e.g. http://10.0.0.11:8080",
+      "addHost": "Add host",
+      "receiving": "Receives traffic",
+      "receivingHelp": "\"Receives traffic\" is not a direction; it decides whether this host gets requests. Turned off, the host is kept but not forwarded to (for maintenance, updates or isolation); takes effect after publishing. Each group needs at least one on. e.g. http://10.10.10.8/human [on] gets requests, http://10.10.10.9/human [off] paused",
+      "clusterId": "Host group ID (ClusterId)",
+      "groupHosts": "Group {{group}} hosts",
+      "minOne": "At least one host is required"
+    },
+    "systemRoutes": {
+      "title": "System routes (read-only)",
+      "description": "These paths are defined in the gateway settings file, are not affected by publishing, and cannot be used by entries.",
+      "healthCheck": "Health check",
+      "reserved": "Reserved paths",
+      "static": "Static proxy routes",
+      "none": "None"
+    }
+  },
+  "split": {
+    "mode": "Traffic split",
+    "variants": "Groups and traffic share",
+    "group": "Group {{key}}",
+    "control": "Control",
+    "addGroup": "Add group",
+    "weightSumError": "Group shares must total 100 (currently {{sum}})",
+    "enabled": "Enable experiment",
+    "stickyDays": "Sticky days",
+    "stickyHint": "A client stays in the same group for this many days; 0 = not sticky",
+    "forceHeader": "Force-group header",
+    "forceHeaderHint": "Requests with this header (value = group key, e.g. B) go to that group",
+    "schedule": "Schedule",
+    "startAt": "Start time",
+    "endAt": "End time",
+    "rollback": "Auto rollback",
+    "rollbackEnabled": "Enable auto rollback",
+    "threshold": "5xx rate threshold (%)",
+    "duration": "Duration (minutes)",
+    "minSamples": "Minimum samples",
+    "rollbackHint": "When a non-control group's 5xx rate stays above the threshold, all traffic returns to the control group",
+    "actions": {
+      "Pause": "Pause",
+      "Resume": "Resume",
+      "End": "End"
+    },
+    "endConfirm": "An ended experiment can only run again after changing its settings and publishing. End it?",
+    "actionDone": "Experiment {{action}} done"
+  },
+  "experiment": {
+    "status": {
+      "Draft": "Draft",
+      "Scheduled": "Scheduled",
+      "Running": "Running",
+      "Paused": "Paused",
+      "Ended": "Ended",
+      "AutoRolledBack": "Auto rolled back"
+    }
+  },
+  "publish": {
+    "title": "Publish settings",
+    "loading": "Checking changes…",
+    "base": "Base version: {{version}}",
+    "changes": "Changes ({{count}})",
+    "noChanges": "Nothing to publish",
+    "issues": "Fix these first ({{count}})",
+    "note": "Release note",
+    "notePlaceholder": "Describe this change (required)",
+    "noteRequired": "Please enter a release note",
+    "submit": "Publish",
+    "success": "Version {{version}} published",
+    "draftChanged": "Changes were updated. Please review again.",
+    "inProgress": "Another admin is publishing. Please try again later.",
+    "otherService": "Other",
+    "action": {
+      "Added": "Added",
+      "Modified": "Modified",
+      "Removed": "Removed"
+    },
+    "entity": {
+      "Service": "Service",
+      "Route": "Entry",
+      "Experiment": "A/B experiment",
+      "Cluster": "Host group",
+      "Host": "Host"
+    }
+  },
+  "issues": {
+    "ROUTE_PATH_INVALID": "Entry {{routeKey}} has an invalid path",
+    "ROUTE_HOST_INVALID": "Entry {{routeKey}} has an invalid domain {{host}}",
+    "ROUTE_METHOD_INVALID": "Entry {{routeKey}} has an unsupported method {{method}}",
+    "ROUTE_ORDER_INVALID": "Entry {{routeKey}} priority must be between 0 and 10000",
+    "ROUTE_RESERVED_PATH": "Entry {{routeKey}} overlaps the reserved path {{reserved}}",
+    "ROUTE_ROOT_CATCHALL_WITHOUT_HOST": "Entry {{routeKey}} matches every path and must specify a domain",
+    "ROUTE_CONFLICT": "Entry {{routeKey}} has the same path, domain, method and priority as {{other}}",
+    "ROUTE_NO_TARGET": "Entry {{routeKey}} does not point to any host",
+    "TARGET_CLUSTER_MISSING": "The target host group does not exist or is disabled",
+    "TARGET_CLUSTER_NO_ACTIVE_HOST": "The host group has no host receiving traffic",
+    "EXPERIMENT_WEIGHT_SUM": "A/B group shares total {{sum}}; they must total 100",
+    "EXPERIMENT_VARIANT_COUNT": "An A/B experiment needs 2 – 5 groups (currently {{count}})",
+    "EXPERIMENT_CONTROL": "An A/B experiment must have exactly one control group",
+    "EXPERIMENT_TIME_RANGE": "The A/B experiment end time must be after its start time",
+    "EXPERIMENT_ENDED": "The A/B experiment end time has passed",
+    "EXPERIMENT_ROLLBACK_RULE": "The A/B experiment auto-rollback rule is invalid",
+    "YARP_CONFIG_INVALID": "Gateway configuration check failed: {{message}}",
+    "unknown": "Configuration check failed ({{code}})"
+  },
+  "errors": {
+    "SERVICES_KEY_INVALID": "Service key may only contain lowercase letters, digits and hyphens (2 – 63 chars)",
+    "SERVICES_KEY_EXISTS": "Service key is already in use",
+    "SERVICES_KEY_IMMUTABLE": "Service key cannot be changed",
+    "SERVICES_DISPLAY_NAME_INVALID": "Enter a service name (up to 100 chars)",
+    "SERVICES_TAGS_INVALID": "Up to 10 tags, 30 chars each",
+    "SERVICES_DESCRIPTION_TOO_LONG": "Notes may be up to 500 chars",
+    "SERVICES_ROUTES_REQUIRED": "At least one entry is required",
+    "SERVICES_HOSTS_REQUIRED": "At least one host is required",
+    "SERVICES_ROUTING_MODE_INVALID": "Traffic split settings are incomplete",
+    "SERVICES_NOT_FOUND": "Service not found",
+    "ROUTES_NOT_FOUND": "Entry not found",
+    "ROUTES_PATH_INVALID": "Invalid path; it must start with /",
+    "ROUTES_HOST_INVALID": "Invalid domain",
+    "ROUTES_METHOD_INVALID": "Contains an unsupported HTTP method",
+    "ROUTES_ORDER_INVALID": "Priority must be between 0 and 10000",
+    "ROUTES_PREFIX_INVALID": "The prefix must be the fixed beginning of the path",
+    "HOSTS_ADDRESS_INVALID": "Host address must be a full URL starting with http:// or https://",
+    "HOSTS_NOT_FOUND": "Host not found",
+    "CLUSTERS_IN_USE": "The host group is still used by another service",
+    "CLUSTERS_DISPLAY_NAME_INVALID": "Enter a host group name",
+    "EXPERIMENTS_INVALID": "Invalid A/B settings (shares total 100, 2 – 5 groups, exactly one control)",
+    "EXPERIMENTS_NOT_FOUND": "The experiment has not been published",
+    "EXPERIMENTS_ACTION_INVALID": "This action is not available in the current state",
+    "PUBLISH_NOTE_REQUIRED": "Please enter a release note",
+    "PUBLISH_NO_CHANGES": "Nothing to publish",
+    "PUBLISH_VALIDATION_FAILED": "Configuration check failed",
+    "PUBLISH_IN_PROGRESS": "Another admin is publishing. Please try again later.",
+    "PUBLISH_DRAFT_CHANGED": "Changes were updated. Please review again.",
+    "PUBLISH_DAILY_LIMIT": "Daily publish limit reached (99 versions)",
+    "PUBLISH_STORAGE_UNAVAILABLE": "Database is temporarily unavailable; the gateway keeps its current settings",
+    "COMMON_FORBIDDEN": "You do not have permission to do this"
   }
 }

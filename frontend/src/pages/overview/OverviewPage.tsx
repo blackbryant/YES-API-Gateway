@@ -12,6 +12,9 @@ import { StatCards } from './StatCards'
 export default function OverviewPage() {
   const { t } = useTranslation()
   const { status, data, reload } = useAsyncData(() => dataSource.getOverview())
+  const experiments = useAsyncData(() => dataSource.getExperimentSummary())
+  // 自動回退的實驗併入「需要處理」；載入失敗時不影響其他事項
+  const experimentAttention = useAsyncData(() => dataSource.getExperimentAttention().catch(() => []))
 
   return (
     <div className="flex flex-col gap-6">
@@ -21,10 +24,10 @@ export default function OverviewPage() {
       <AsyncSection status={status} onRetry={reload}>
         {data && (
           <div className="flex flex-col gap-6">
-            <AttentionList items={data.attentionItems} />
+            <AttentionList items={[...data.attentionItems, ...(experimentAttention.data ?? [])]} />
             <StatCards stats={data.stats} />
             <NodeSyncTable nodes={data.nodes} />
-            <ExperimentList experiments={data.experiments} />
+            <ExperimentList status={experiments.status} experiments={experiments.data ?? []} onRetry={experiments.reload} />
           </div>
         )}
       </AsyncSection>

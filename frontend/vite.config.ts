@@ -5,38 +5,42 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig, loadEnv } from 'vite'
 
 export const DEV_SERVER_PORT = 5180
+/** Playwright 端對端測試專用的開發伺服器埠（範例資料，與串接後端的 5180 分開） */
+export const E2E_SERVER_PORT = 5181
+/** 未設定 VITE_API_PROXY_TARGET 時，/api 轉送的後端位址 */
+const DEFAULT_API_PROXY_TARGET = 'http://localhost:5072'
 const PREVIEW_SERVER_PORT = 4180
 const DATA_SOURCE_IMPL_ALIAS = '~data-source-impl'
-/** 以範例資料建置正式最佳化版本的模式，僅供本機 Lighthouse 量測 */
-const MOCK_PREVIEW_MODE = 'mock-preview'
+/** Playwright 端對端測試的模式（npm run dev:e2e） */
+const E2E_MODE = 'e2e'
 
 // https://vite.dev/config/
-export default defineConfig(({ command, mode }) => {
+export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_')
-
-  // 假登入只存在於 mock 資料來源，不得進入正式環境（research R3）。
-  // 唯一例外是明確指定的 mock-preview 模式，僅供本機效能量測，不得部署。
-  if (command === 'build' && env.VITE_DATA_SOURCE !== 'api' && mode !== MOCK_PREVIEW_MODE) {
-    throw new Error(
-      `正式建置必須使用 VITE_DATA_SOURCE=api（目前為 "${env.VITE_DATA_SOURCE ?? ''}"）：mock 資料來源含假登入，不得進入正式環境。`,
-    )
-  }
+  // 範例資料（含假登入）只放在 tests/mocks，僅單元測試（vitest）與端對端測試使用，管理介面一律串接後端（research R3）
+  const useMockDataSource = mode === E2E_MODE || process.env.VITEST === 'true'
 
   return {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        // 依 VITE_DATA_SOURCE 於建置時選擇資料來源實作；正式建置不會打包 mock 與假登入（research R3）
         [DATA_SOURCE_IMPL_ALIAS]: fileURLToPath(
           new URL(
-            env.VITE_DATA_SOURCE === 'api' ? './src/data/http/httpDataSource.ts' : './src/data/mock/mockDataSource.ts',
+            useMockDataSource ? './tests/mocks/mockDataSource.ts' : './src/data/http/httpDataSource.ts',
             import.meta.url,
           ),
         ),
       },
     },
+    // dayjs 只在懶載入的服務頁使用，預先打包避免開發伺服器首次載入該頁時重新整理
+    optimizeDeps: { include: ['dayjs'] },
     // 固定使用 5180，避免與本機其他 Vite 專案（預設 5173）衝突
-    server: { port: DEV_SERVER_PORT, strictPort: true },
+    // /api 轉送到後端，與管理介面同源，登入 Cookie（SameSite=Strict、Path=/api）才能正常帶上
+    server: {
+      port: DEV_SERVER_PORT,
+      strictPort: true,
+      proxy: { '/api': { target: env.VITE_API_PROXY_TARGET || DEFAULT_API_PROXY_TARGET, changeOrigin: true } },
+    },
     preview: { port: PREVIEW_SERVER_PORT, strictPort: true },
     test: {
       environment: 'jsdom',

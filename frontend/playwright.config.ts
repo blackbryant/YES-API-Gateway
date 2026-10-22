@@ -1,7 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
-import { DEV_SERVER_PORT } from './vite.config.ts'
+import { E2E_SERVER_PORT } from './vite.config.ts'
 
-const BASE_URL = `http://localhost:${DEV_SERVER_PORT}`
+// 端對端測試使用範例資料，另開 5181 埠，不會重用串接後端的開發伺服器（5180）
+const BASE_URL = `http://localhost:${E2E_SERVER_PORT}`
 
 export default defineConfig({
   testDir: 'tests/e2e',
@@ -18,7 +19,7 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run dev:e2e',
     url: BASE_URL,
     reuseExistingServer: true,
   },

@@ -1,10 +1,11 @@
+using ApiGateway.Models.Constants;
 using System.Diagnostics;
 using ApiGateway.Infrastructure.Http;
 
 namespace ApiGateway.Middleware;
 
 /// <summary>
-/// /api 回應為 4xx / 5xx 時記錄請求摘要。
+/// Admin API（/api/v1）回應為 4xx / 5xx 時記錄請求摘要；閘道代理流量不經此記錄。
 /// 不記錄 request / response body，避免密碼、token 等機密寫入日誌（憲章八）。
 /// </summary>
 public sealed class RequestResponseLoggingMiddleware
@@ -22,7 +23,7 @@ public sealed class RequestResponseLoggingMiddleware
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (!context.Request.Path.StartsWithSegments("/api"))
+        if (!context.Request.Path.StartsWithSegments(AuthRules.AdminApiPrefix))
         {
             await _next(context);
             return;

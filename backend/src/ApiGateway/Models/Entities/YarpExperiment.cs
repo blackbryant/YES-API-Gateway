@@ -16,8 +16,11 @@ public class YarpExperiment : AuditableEntity
     [Comment("實驗名稱")]
     public string ExperimentKey { get; set; } = string.Empty;
 
+    [Comment("所屬服務（YarpServices.Id）")]
+    public long ServiceId { get; set; }
+
     [MaxLength(20)]
-    [Comment("實驗狀態（Draft, Scheduled, Running, Paused, Ended）")]
+    [Comment("設定狀態（Draft / Running），有效狀態由執行期計算")]
     public string Status { get; set; } = string.Empty;
 
     [MaxLength(100)]

@@ -23,6 +23,8 @@ export const router = createBrowserRouter([
             children: [
               { index: true, lazy: page(() => import('./pages/overview/OverviewPage')) },
               { path: ROUTES.services, lazy: page(() => import('./pages/services/ServicesPage')) },
+              { path: ROUTES.serviceNew, lazy: page(() => import('./pages/services/ServiceWizardPage')) },
+              { path: ROUTES.serviceDetail, lazy: page(() => import('./pages/services/ServiceDetailPage')) },
               { path: ROUTES.hosts, lazy: page(() => import('./pages/hosts/HostsPage')) },
               { path: ROUTES.templates, lazy: page(() => import('./pages/templates/TemplatesPage')) },
               { path: ROUTES.releases, lazy: page(() => import('./pages/releases/ReleasesPage')) },

@@ -1,21 +1,12 @@
 using System.Text.Json;
 using ApiGateway.Repositories.Interfaces;
-using Yarp.ReverseProxy.Configuration;
 
 namespace ApiGateway.Gateway;
-
-/// <summary>YarpConfigVersions.YarpConfig 的 JSON 結構（由發佈流程產生）</summary>
-public sealed class YarpConfigDocument
-{
-    public List<RouteConfig> Routes { get; set; } = [];
-
-    public List<ClusterConfig> Clusters { get; set; } = [];
-}
 
 /// <summary>
 /// 啟動時載入生效版本到 DatabaseProxyConfigProvider。
 /// 無生效版本或資料庫異常時只寫警告日誌，Gateway 以空設定（僅靜態路由）啟動（憲章一）。
-/// TODO：多節點同步（定期比對 Checksum 或 LISTEN/NOTIFY）於發佈功能實作。
+/// 之後的版本變更由 ConfigSyncService 輪詢同步。
 /// </summary>
 public sealed class ProxyConfigLoader : IHostedService
 {
@@ -46,10 +37,10 @@ public sealed class ProxyConfigLoader : IHostedService
                 return;
             }
 
-            var document = JsonSerializer.Deserialize<YarpConfigDocument>(active.YarpConfig, SerializerOptions) ?? new YarpConfigDocument();
-            _provider.Update(document.Routes, document.Clusters, active.VersionNo, active.Checksum);
-            _logger.LogInformation("已載入設定版本 {VersionNo}（routes={RouteCount}, clusters={ClusterCount}）",
-                active.VersionNo, document.Routes.Count, document.Clusters.Count);
+            var document = Deserialize(active.YarpConfig);
+            _provider.ApplyDocument(document, active.VersionNo, active.Checksum);
+            _logger.LogInformation("已載入設定版本 {VersionNo}（routes={RouteCount}, clusters={ClusterCount}, experiments={ExperimentCount}）",
+                active.VersionNo, document.Routes.Count, document.Clusters.Count, document.Experiments.Count);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -58,4 +49,7 @@ public sealed class ProxyConfigLoader : IHostedService
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public static YarpConfigDocument Deserialize(string json) =>
+        JsonSerializer.Deserialize<YarpConfigDocument>(json, SerializerOptions) ?? new YarpConfigDocument();
 }

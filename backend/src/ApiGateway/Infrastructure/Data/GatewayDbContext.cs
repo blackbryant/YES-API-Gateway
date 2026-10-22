@@ -42,6 +42,8 @@ public class GatewayDbContext : DbContext
     public DbSet<YarpExperimentVariant> ExperimentVariants => Set<YarpExperimentVariant>();
     public DbSet<YarpExperimentRule> ExperimentRules => Set<YarpExperimentRule>();
     public DbSet<YarpApiVersion> ApiVersions => Set<YarpApiVersion>();
+    public DbSet<YarpExperimentRuntime> ExperimentRuntime => Set<YarpExperimentRuntime>();
+    public DbSet<YarpGatewayNode> GatewayNodes => Set<YarpGatewayNode>();
 
     // 安全性與全域設定
     public DbSet<YarpCertificate> Certificates => Set<YarpCertificate>();
@@ -123,7 +125,12 @@ public class GatewayDbContext : DbContext
             e.HasOne<YarpDestination>().WithMany().HasForeignKey(x => x.DestinationId).OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<YarpCluster>().HasIndex(x => x.ClusterKey).IsUnique();
+        modelBuilder.Entity<YarpCluster>(e =>
+        {
+            e.HasIndex(x => x.ClusterKey).IsUnique();
+            e.HasIndex(x => x.OwnerServiceId);
+            e.HasOne<YarpService>().WithMany().HasForeignKey(x => x.OwnerServiceId).OnDelete(DeleteBehavior.SetNull);
+        });
 
         modelBuilder.Entity<YarpClusterHealthCheck>(e =>
         {
@@ -189,7 +196,21 @@ public class GatewayDbContext : DbContext
 
     private static void ConfigureTrafficControl(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<YarpExperiment>().HasIndex(x => x.ExperimentKey).IsUnique();
+        modelBuilder.Entity<YarpExperiment>(e =>
+        {
+            e.HasIndex(x => x.ExperimentKey).IsUnique();
+            e.HasIndex(x => x.ServiceId);
+            e.HasOne<YarpService>().WithMany().HasForeignKey(x => x.ServiceId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // 執行期資料（不納入設定版本）
+        modelBuilder.Entity<YarpExperimentRuntime>(e =>
+        {
+            e.HasKey(x => x.ExperimentKey);
+            e.HasOne<AppUser>().WithMany().HasForeignKey(x => x.UpdatedBy).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<YarpGatewayNode>().HasKey(x => x.NodeId);
 
         modelBuilder.Entity<YarpExperimentVariant>(e =>
         {

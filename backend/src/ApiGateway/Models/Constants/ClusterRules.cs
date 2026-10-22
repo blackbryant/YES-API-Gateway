@@ -7,8 +7,10 @@ public static class ClusterRules
 {
     public const int KeyMaxLength = 100;
 
-    /// <summary>ClusterKey 僅允許英數、底線、連字號、句點</summary>
-    public const string KeyPattern = "^[A-Za-z0-9_.-]+$";
+    /// <summary>ClusterKey 為系統產生的 ULID（26 字元 Crockford Base32）</summary>
+    public const string KeyPattern = "^[0-9A-HJKMNP-TV-Z]{26}$";
+
+    public const int DisplayNameMaxLength = 100;
 
     public const int DescriptionMaxLength = 500;
 

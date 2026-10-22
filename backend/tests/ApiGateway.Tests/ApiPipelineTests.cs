@@ -6,11 +6,14 @@ using ApiGateway.Models.DTOs;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 
+using ApiGateway.Tests.Infrastructure;
+
 namespace ApiGateway.Tests;
 
 /// <summary>
 /// Middleware 管線冒煙測試：不連資料庫（連線字串指向不存在的埠，背景初始化只會記警告）。
 /// </summary>
+[Collection(WebHostCollection.Name)]
 public class ApiPipelineTests : IClassFixture<ApiPipelineTests.Factory>
 {
     private readonly HttpClient _client;
@@ -69,18 +72,19 @@ public class ApiPipelineTests : IClassFixture<ApiPipelineTests.Factory>
     }
 
     [Fact]
-    public async Task UnknownApiPath_Returns404Json()
+    public async Task UnknownAdminApiPath_ReturnsJsonNotSpa()
     {
-        var response = await _client.GetAsync("/api/unknown");
+        // /api/v1 為 Admin API 保留前綴：未登入先回 401 JSON，不會落入動態路由或 SPA fallback
+        var response = await _client.GetAsync("/api/v1/unknown");
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        Assert.Equal(ErrorCodes.NotFound, await ReadCodeAsync(response));
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        Assert.Equal(ErrorCodes.AuthUnauthenticated, await ReadCodeAsync(response));
     }
 
     [Fact]
     public async Task HealthCheck_Returns200AndHidesServerHeader()
     {
-        var response = await _client.GetAsync("/healthz");
+        var response = await _client.GetAsync("/health");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.False(response.Headers.Contains("Server"));

@@ -1,3 +1,4 @@
+using ApiGateway.Infrastructure.Ids;
 using ApiGateway.Models.Constants;
 using ApiGateway.Models.DTOs;
 using ApiGateway.Models.Entities;
@@ -20,6 +21,8 @@ public class ClusterServiceTests
     private readonly Mock<IConfigDraftRepository> _drafts = new();
     private readonly Mock<IAuditTrailService> _audit = new();
     private readonly Mock<IUnitOfWork> _unitOfWork = new();
+    private const string GeneratedKey = "01JC0000000000000000000001";
+    private readonly Mock<ISystemIdGenerator> _ids = new();
     private readonly ClusterService _sut;
 
     public ClusterServiceTests()
@@ -28,14 +31,15 @@ public class ClusterServiceTests
         _access.Setup(x => x.EnsureAdminAsync(AdminId, It.IsAny<CancellationToken>())).ReturnsAsync(admin);
         _access.Setup(x => x.EnsureAdminAsync(ReaderId, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new UnauthorizedAccessException(ErrorCodes.Forbidden));
+        _ids.Setup(x => x.NewUlid()).Returns(GeneratedKey);
         _access.Setup(x => x.EnsureSignedInAsync(It.IsAny<long?>(), It.IsAny<CancellationToken>())).ReturnsAsync(admin);
 
         _sut = new ClusterService(_access.Object, _clusters.Object, _drafts.Object, _audit.Object, _unitOfWork.Object,
-            new FakeTimeProvider(), NullLogger<ClusterService>.Instance);
+            _ids.Object, new FakeTimeProvider(), NullLogger<ClusterService>.Instance);
     }
 
-    private static ClusterSaveRequest ValidRequest(string key = "Payment_Group") =>
-        new(key, "RoundRobin", "2.0", "RequestVersionOrLower", 100, null, false, true, "支付");
+    private static ClusterSaveRequest ValidRequest(string displayName = "支付群組") =>
+        new(displayName, "RoundRobin", "2.0", "RequestVersionOrLower", 100, null, false, true, "支付");
 
     [Fact]
     public async Task Create_ByReader_ThrowsForbidden()
@@ -47,12 +51,12 @@ public class ClusterServiceTests
     }
 
     [Theory]
-    [InlineData("", ErrorCodes.ClustersKeyInvalid)]
-    [InlineData("has space", ErrorCodes.ClustersKeyInvalid)]
-    public async Task Create_InvalidKey_ThrowsArgument(string key, string expectedCode)
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task Create_InvalidDisplayName_ThrowsArgument(string displayName)
     {
-        var ex = await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateAsync(AdminId, ValidRequest(key)));
-        Assert.Equal(expectedCode, ex.Message);
+        var ex = await Assert.ThrowsAsync<ArgumentException>(() => _sut.CreateAsync(AdminId, ValidRequest(displayName)));
+        Assert.Equal(ErrorCodes.ClustersDisplayNameInvalid, ex.Message);
     }
 
     [Fact]
@@ -78,28 +82,19 @@ public class ClusterServiceTests
     }
 
     [Fact]
-    public async Task Create_DuplicateKey_ThrowsConflict()
-    {
-        _clusters.Setup(x => x.ExistsByKeyAsync("Payment_Group", null, It.IsAny<CancellationToken>())).ReturnsAsync(true);
-
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _sut.CreateAsync(AdminId, ValidRequest()));
-
-        Assert.Equal(ErrorCodes.ClustersKeyExists, ex.Message);
-    }
-
-    [Fact]
     public async Task Create_Valid_AddsMarksDraftAuditsAndSavesOnce()
     {
         YarpCluster? added = null;
         _clusters.Setup(x => x.Add(It.IsAny<YarpCluster>())).Callback<YarpCluster>(c => added = c);
 
-        var result = await _sut.CreateAsync(AdminId, ValidRequest(" Payment_Group "));
+        var result = await _sut.CreateAsync(AdminId, ValidRequest(" 支付群組 "));
 
         Assert.NotNull(added);
-        Assert.Equal("Payment_Group", result.ClusterKey);
+        Assert.Equal(GeneratedKey, result.ClusterKey);
+        Assert.Equal("支付群組", result.DisplayName);
         Assert.Equal(AdminId, added.UpdatedBy);
         _drafts.Verify(x => x.MarkDirtyAsync(AdminId, It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()), Times.Once);
-        _audit.Verify(x => x.Record(AuditActions.Create, "YarpClusters", "Payment_Group", AdminId, null, It.IsAny<object>()), Times.Once);
+        _audit.Verify(x => x.Record(AuditActions.Create, "YarpClusters", GeneratedKey, AdminId, null, It.IsAny<object>()), Times.Once);
         _unitOfWork.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 

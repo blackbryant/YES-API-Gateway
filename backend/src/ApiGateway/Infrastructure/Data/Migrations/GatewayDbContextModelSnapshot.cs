@@ -541,7 +541,7 @@ namespace ApiGateway.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
-                        .HasComment("群組名稱，即 YARP 的 ClusterId");
+                        .HasComment("系統產生 ULID，即 YARP 的 ClusterId");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -551,6 +551,12 @@ namespace ApiGateway.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)")
                         .HasComment("備註");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("畫面顯示名稱");
 
                     b.Property<string>("HttpVersion")
                         .IsRequired()
@@ -583,6 +589,10 @@ namespace ApiGateway.Infrastructure.Data.Migrations
                         .HasColumnType("jsonb")
                         .HasComment("自訂屬性");
 
+                    b.Property<long?>("OwnerServiceId")
+                        .HasColumnType("bigint")
+                        .HasComment("由服務自動建立時的所屬服務（YarpServices.Id）");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasComment("更新時間");
@@ -595,6 +605,8 @@ namespace ApiGateway.Infrastructure.Data.Migrations
 
                     b.HasIndex("ClusterKey")
                         .IsUnique();
+
+                    b.HasIndex("OwnerServiceId");
 
                     b.HasIndex("UpdatedBy");
 
@@ -1110,6 +1122,10 @@ namespace ApiGateway.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(100)")
                         .HasComment("實驗名稱");
 
+                    b.Property<long>("ServiceId")
+                        .HasColumnType("bigint")
+                        .HasComment("所屬服務（YarpServices.Id）");
+
                     b.Property<DateTimeOffset?>("StartAt")
                         .HasColumnType("timestamp with time zone")
                         .HasComment("開始時間");
@@ -1118,7 +1134,7 @@ namespace ApiGateway.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
-                        .HasComment("實驗狀態（Draft, Scheduled, Running, Paused, Ended）");
+                        .HasComment("設定狀態（Draft / Running），有效狀態由執行期計算");
 
                     b.Property<string>("StickyCookieName")
                         .IsRequired()
@@ -1142,6 +1158,8 @@ namespace ApiGateway.Infrastructure.Data.Migrations
 
                     b.HasIndex("ExperimentKey")
                         .IsUnique();
+
+                    b.HasIndex("ServiceId");
 
                     b.HasIndex("UpdatedBy");
 
@@ -1220,6 +1238,58 @@ namespace ApiGateway.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("ApiGateway.Models.Entities.YarpExperimentRuntime", b =>
+                {
+                    b.Property<string>("ExperimentKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("實驗名稱（對應生效版本中的 ExperimentKey）");
+
+                    b.Property<bool>("IsAutoRolledBack")
+                        .HasColumnType("boolean")
+                        .HasComment("是否由自動回退造成的暫停");
+
+                    b.Property<string>("LastScheduleEvent")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasComment("已記錄的排程事件（Started / Ended），避免多節點重複寫稽核");
+
+                    b.Property<string>("OverrideStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasComment("覆寫狀態（Paused / Ended；空值代表無覆寫）");
+
+                    b.Property<DateTimeOffset?>("TriggeredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("自動回退觸發時間");
+
+                    b.Property<string>("TriggeredByNode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("觸發自動回退的閘道節點");
+
+                    b.Property<string>("TriggeredMetric")
+                        .HasColumnType("jsonb")
+                        .HasComment("自動回退觸發時的指標");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("最後更新時間");
+
+                    b.Property<long?>("UpdatedBy")
+                        .HasColumnType("bigint")
+                        .HasComment("手動操作者（AppUsers.Id），系統操作為空值");
+
+                    b.HasKey("ExperimentKey");
+
+                    b.HasIndex("UpdatedBy");
+
+                    b.ToTable("YarpExperimentRuntime", t =>
+                        {
+                            t.HasComment("實驗執行期狀態表：手動暫停、結束與自動回退的覆寫，不納入設定版本");
+                        });
+                });
+
             modelBuilder.Entity("ApiGateway.Models.Entities.YarpExperimentVariant", b =>
                 {
                     b.Property<long>("Id")
@@ -1275,6 +1345,33 @@ namespace ApiGateway.Infrastructure.Data.Migrations
                     b.ToTable("YarpExperimentVariants", t =>
                         {
                             t.HasComment("實驗變體表：各組別指向一個群組並設定流量比例");
+                        });
+                });
+
+            modelBuilder.Entity("ApiGateway.Models.Entities.YarpGatewayNode", b =>
+                {
+                    b.Property<string>("NodeId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasComment("節點識別（Gateway:NodeId，未設定時為機器名稱）");
+
+                    b.Property<DateTimeOffset>("LastHeartbeatAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasComment("最後心跳時間");
+
+                    b.Property<string>("LoadedChecksum")
+                        .HasColumnType("char(64)")
+                        .HasComment("目前載入版本的校驗碼");
+
+                    b.Property<string>("LoadedVersionNo")
+                        .HasColumnType("char(10)")
+                        .HasComment("目前載入的版本號");
+
+                    b.HasKey("NodeId");
+
+                    b.ToTable("YarpGatewayNodes", t =>
+                        {
+                            t.HasComment("閘道節點表：各節點心跳與目前載入的設定版本，用於判斷同步狀態");
                         });
                 });
 
@@ -2040,6 +2137,11 @@ namespace ApiGateway.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ApiGateway.Models.Entities.YarpCluster", b =>
                 {
+                    b.HasOne("ApiGateway.Models.Entities.YarpService", null)
+                        .WithMany()
+                        .HasForeignKey("OwnerServiceId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("ApiGateway.Models.Entities.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
@@ -2124,6 +2226,12 @@ namespace ApiGateway.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("ApiGateway.Models.Entities.YarpExperiment", b =>
                 {
+                    b.HasOne("ApiGateway.Models.Entities.YarpService", null)
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ApiGateway.Models.Entities.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UpdatedBy")
@@ -2146,6 +2254,14 @@ namespace ApiGateway.Infrastructure.Data.Migrations
                     b.HasOne("ApiGateway.Models.Entities.YarpExperimentVariant", null)
                         .WithMany()
                         .HasForeignKey("VariantId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("ApiGateway.Models.Entities.YarpExperimentRuntime", b =>
+                {
+                    b.HasOne("ApiGateway.Models.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UpdatedBy")
                         .OnDelete(DeleteBehavior.SetNull);
                 });
 

@@ -28,7 +28,7 @@ public class AuthMiddlewareTests
     [InlineData("POST", "/api/v1/auth/login/")]
     [InlineData("POST", "/api/v1/auth/logout")]
     [InlineData("OPTIONS", "/api/v1/clusters")]
-    [InlineData("GET", "/healthz")]
+    [InlineData("GET", "/health")]
     [InlineData("GET", "/dashboard")]
     [InlineData("GET", "/api/v10/anything")]
     public void AnonymousOrNonAdminPaths_DoNotRequireAuthentication(string method, string path)
