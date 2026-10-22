@@ -26,7 +26,7 @@ do {
         '1' {
             Write-Host "`n正在啟動 API 專案 (Environment: Development)..." -ForegroundColor Green
             $env:ASPNETCORE_ENVIRONMENT="Development"
-            $apiProject = "backend/src/Backend.Api/Backend.Api.csproj"
+            $apiProject = "backend/src/ApiGateway/ApiGateway.csproj"
             if (Test-Path $apiProject) {
                 dotnet watch run --project $apiProject
             } else {
@@ -81,14 +81,15 @@ do {
                     Write-Host "  $($file.Name)  ($sizeKb KB)" -ForegroundColor Green
                 }
 
-                $apiProjectDir = "backend/src/Backend.Api"
+                $apiProjectDir = "backend/src/ApiGateway"
                 $wwwrootPath = "$apiProjectDir/wwwroot"
                 if (-not (Test-Path $apiProjectDir)) {
                     Write-Host "`n找不到 $apiProjectDir，後端 C# 專案尚未建立，略過複製到 wwwroot。" -ForegroundColor Yellow
                 } else {
                     Write-Host "`n正在複製打包結果到 $wwwrootPath （全部覆蓋）..." -ForegroundColor Magenta
                     if (Test-Path $wwwrootPath) {
-                        Get-ChildItem -Path $wwwrootPath -Force | Remove-Item -Recurse -Force
+                        # 保留 .gitkeep（wwwroot 目錄本身納入版控）
+                        Get-ChildItem -Path $wwwrootPath -Force | Where-Object { $_.Name -ne '.gitkeep' } | Remove-Item -Recurse -Force
                     } else {
                         New-Item -ItemType Directory -Path $wwwrootPath -Force | Out-Null
                     }

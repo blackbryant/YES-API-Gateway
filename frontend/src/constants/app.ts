@@ -8,7 +8,7 @@ export const MAX_RETAINED_VERSIONS = 20
 export const API_TIMEOUT_MS = 10000
 
 /** API 基底路徑 */
-export const API_BASE_PATH = '/api'
+export const API_BASE_PATH = '/api/v1'
 
 /** mock 資料來源模擬的網路延遲毫秒數 */
 export const MOCK_DELAY_MS = 300
