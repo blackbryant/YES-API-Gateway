@@ -1,0 +1,61 @@
+### 主機群組（範例 CRUD）— 請先執行 auth.http 的登入取得 Cookie
+@baseUrl = http://localhost:5072/api/v1
+
+### 查詢（分頁 + 關鍵字）
+GET {{baseUrl}}/clusters?keyword=payment&pageIndex=1&pageSize=20
+
+### 新增 → 201
+# @name createCluster
+POST {{baseUrl}}/clusters
+Content-Type: application/json
+
+{
+  "clusterKey": "Payment_Service_Group",
+  "loadBalancingPolicy": "RoundRobin",
+  "httpVersion": "2.0",
+  "httpVersionPolicy": "RequestVersionOrLower",
+  "activityTimeoutSec": 100,
+  "maxConnectionsPerServer": null,
+  "acceptAnyServerCertificate": false,
+  "isActive": true,
+  "description": "支付服務主機群組"
+}
+
+### 取得單筆
+@clusterId = {{createCluster.response.body.data.id}}
+GET {{baseUrl}}/clusters/{{clusterId}}
+
+### 修改
+PUT {{baseUrl}}/clusters/{{clusterId}}
+Content-Type: application/json
+
+{
+  "clusterKey": "Payment_Service_Group",
+  "loadBalancingPolicy": "LeastRequests",
+  "httpVersion": "2.0",
+  "httpVersionPolicy": "RequestVersionOrLower",
+  "activityTimeoutSec": 60,
+  "acceptAnyServerCertificate": false,
+  "isActive": true,
+  "description": "改為最少請求優先"
+}
+
+### 重複名稱 → 409 CLUSTERS_KEY_EXISTS
+POST {{baseUrl}}/clusters
+Content-Type: application/json
+
+{
+  "clusterKey": "Payment_Service_Group",
+  "activityTimeoutSec": 100,
+  "acceptAnyServerCertificate": false,
+  "isActive": true
+}
+
+### 缺少必填數值欄位 → 400 COMMON_VALIDATION_FAILED
+POST {{baseUrl}}/clusters
+Content-Type: application/json
+
+{ "clusterKey": "Missing_Fields" }
+
+### 刪除 → 204（仍被引用 → 409 CLUSTERS_IN_USE）
+DELETE {{baseUrl}}/clusters/{{clusterId}}

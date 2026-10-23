@@ -1,0 +1,11 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/logs/
+**/desktop.ini
+frontend/dist/
+frontend/dist-mock-preview/
+.git/
+.claude/
+.specify/
+yes-specs/

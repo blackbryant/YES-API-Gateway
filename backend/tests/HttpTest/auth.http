@@ -1,0 +1,36 @@
+### 認證（F-15）— 使用 VS Code REST Client 或 Rider / Visual Studio .http 執行
+@baseUrl = http://localhost:5072/api/v1
+
+### 登入：成功時以 HttpOnly Cookie（yes_access_token）回傳 token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "{{$processEnv Database__SeedAdminPassword}}"
+}
+
+### 目前使用者（Cookie 由用戶端自動帶入）
+GET {{baseUrl}}/auth/me
+
+### 帳密空白 → 400 AUTH_CREDENTIALS_REQUIRED
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "username": "", "password": "" }
+
+### 帳密錯誤 → 401 AUTH_INVALID_CREDENTIALS（連續 5 次 → 423 AUTH_ACCOUNT_LOCKED）
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{ "username": "admin", "password": "wrong" }
+
+### 登出
+POST {{baseUrl}}/auth/logout
+
+### 未登入 → 401 AUTH_UNAUTHENTICATED
+GET {{baseUrl}}/auth/me
+
+### 草稿狀態（頂部列）
+GET {{baseUrl}}/draft/status

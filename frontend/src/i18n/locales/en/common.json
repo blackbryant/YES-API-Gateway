@@ -1,0 +1,168 @@
+{
+  "app": {
+    "name": "YES API Gateway"
+  },
+  "layout": {
+    "menuLabel": "Main menu",
+    "menu": {
+      "overview": "Overview",
+      "services": "Services",
+      "hosts": "Hosts",
+      "templates": "Shared templates",
+      "releases": "Releases",
+      "system": "System"
+    }
+  },
+  "status": {
+    "healthy": "Healthy",
+    "unhealthy": "Unhealthy",
+    "disabled": "Disabled",
+    "unchecked": "Not checked",
+    "synced": "Synced",
+    "outOfSync": "Out of sync"
+  },
+  "common": {
+    "loading": "Loading…",
+    "retry": "Reload",
+    "empty": "No data yet",
+    "loadFailed": "Failed to load data",
+    "notAvailable": "This feature is not available yet",
+    "goTo": "Go"
+  },
+  "login": {
+    "title": "Sign in to the console",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "failed": "Sign-in failed. Check your username and password and try again.",
+    "mockHint": "Development mode: any username and password works; add ?role=user to the URL to sign in as read-only"
+  },
+  "user": {
+    "menu": "User menu",
+    "language": "Language",
+    "logout": "Sign out",
+    "role": {
+      "admin": "Administrator",
+      "user": "Read-only user"
+    }
+  },
+  "language": {
+    "zh-TW": "繁體中文",
+    "en": "English"
+  },
+  "system": {
+    "title": "System",
+    "notAvailable": "Not available yet",
+    "accounts": {
+      "title": "Accounts",
+      "description": "Manage sign-in accounts, roles (administrator / read-only) and lockout status."
+    },
+    "auditLogs": {
+      "title": "Audit logs",
+      "description": "Search configuration changes, publishes, rollbacks and sign-ins, including before/after content and source IP."
+    },
+    "endpoints": {
+      "title": "Listening endpoints",
+      "description": "View the external and internal listening endpoints and what they are for.",
+      "note": "Managed in the configuration file; changes require a restart. View only."
+    },
+    "certificates": {
+      "title": "TLS certificates",
+      "description": "Manage TLS certificates per domain and get reminders before they expire."
+    },
+    "ddos": {
+      "title": "DDoS global settings",
+      "description": "Configure application-layer protection such as slow-attack limits, request size and connection limits."
+    },
+    "ipRules": {
+      "title": "IP allow / block list",
+      "description": "Block or allow IPs manually and review automatically blocked addresses."
+    },
+    "blockedPaths": {
+      "title": "Hidden internal endpoints",
+      "description": "Define internal paths that respond 404 / 403 directly, with allowed exception sources."
+    },
+    "tracing": {
+      "title": "Distributed tracing",
+      "description": "Enable distributed tracing, configure sampling, and open Jaeger / Grafana."
+    }
+  },
+  "comingSoon": {
+    "badge": "Coming soon"
+  },
+  "pages": {
+    "services": {
+      "title": "Services",
+      "description": "Manage each public API's entry, protection, processing, traffic split and backend settings in one place. This page is under construction."
+    },
+    "hosts": {
+      "title": "Hosts",
+      "description": "View the health of every backend host and control whether it receives traffic. This page is under construction."
+    },
+    "templates": {
+      "title": "Shared templates",
+      "description": "Manage sign-in, rate limit, CORS, timeout and cache templates shared across services. This page is under construction."
+    },
+    "releases": {
+      "title": "Releases",
+      "description": "Review each published version and its changes, and roll back when needed. This page is under construction."
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or has been removed.",
+    "back": "Back to overview"
+  },
+  "topbar": {
+    "activeVersion": "Active version",
+    "noActiveVersion": "No active version",
+    "pendingChanges": "{{count}} unpublished changes",
+    "reviewAndPublish": "Review & publish",
+    "inSync": "Draft matches the active version",
+    "tryRequest": "Test request",
+    "loadFailed": "Failed to load version info"
+  },
+  "overview": {
+    "title": "Overview",
+    "attention": {
+      "title": "Needs attention",
+      "empty": "Nothing needs your attention right now",
+      "severity": {
+        "critical": "Critical",
+        "warning": "Warning",
+        "info": "Notice"
+      },
+      "hostUnhealthy": "Host {{host}} failed health checks ({{service}} · group {{group}})",
+      "certExpiring": "TLS certificate for {{domain}} expires in {{daysLeft}} days",
+      "nodeOutOfSync": "Gateway node {{node}} has not synced to the active version (currently {{version}})",
+      "unpublishedChanges": "{{count}} changes have not been published"
+    },
+    "stats": {
+      "title": "Statistics",
+      "services": "Services",
+      "servicesHint": "{{count}} internal only",
+      "hosts": "Healthy hosts",
+      "hostsHint": "Healthy / total",
+      "version": "Active version",
+      "versionHint": "{{count}} / {{max}} versions retained",
+      "nodes": "Gateway nodes in sync",
+      "nodesHint": "Synced / total",
+      "none": "None"
+    },
+    "nodes": {
+      "title": "Gateway node sync status",
+      "name": "Node",
+      "loadedVersion": "Loaded version",
+      "status": "Sync status",
+      "empty": "No gateway nodes yet"
+    },
+    "experiments": {
+      "title": "Running A/B experiments",
+      "empty": "No experiments are running",
+      "service": "Service: {{name}}",
+      "variant": "Group {{name}} {{percent}}%",
+      "unhealthyHost": "Unhealthy host",
+      "allHealthy": "Hosts healthy"
+    }
+  }
+}
