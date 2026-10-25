@@ -24,6 +24,7 @@ const SERVICES: ServiceSummary[] = [
     isActive: true,
     routeCount: 2,
     hosts: ['api.company.com'],
+    paths: ['/api/orders/{**catch-all}', '/v2/orders/{**catch-all}'],
     routingMode: 'AbTest',
     hasUnpublishedChanges: true,
     updatedAt: '2026-10-22T00:00:00Z',
@@ -36,6 +37,7 @@ const SERVICES: ServiceSummary[] = [
     isActive: false,
     routeCount: 1,
     hosts: [],
+    paths: [],
     routingMode: 'Single',
     hasUnpublishedChanges: false,
     updatedAt: '2026-10-20T00:00:00Z',
@@ -69,6 +71,8 @@ describe('ServicesPage', () => {
     expect(within(row).getByText('未發佈')).toBeInTheDocument()
     expect(within(row).getByText('orders-api')).toBeInTheDocument()
     expect(within(row).getByText('api.company.com')).toBeInTheDocument()
+    expect(within(row).getByText('/api/orders/{**catch-all}')).toBeInTheDocument()
+    expect(within(row).getByText('/v2/orders/{**catch-all}')).toBeInTheDocument()
     expect(within(row).getByText('A/B 測試')).toBeInTheDocument()
     expect(within(row).getByText('啟用')).toBeInTheDocument()
 
@@ -84,8 +88,25 @@ describe('ServicesPage', () => {
     await userEvent.type(screen.getByRole('searchbox', { name: '搜尋名稱、代碼、網域或路徑' }), 'orders{Enter}')
 
     await waitFor(() =>
-      expect(searchServices).toHaveBeenLastCalledWith({ keyword: 'orders', tag: undefined, pageIndex: 1, pageSize: 20 }),
+      expect(searchServices).toHaveBeenLastCalledWith({ keyword: 'orders', tag: undefined, pageIndex: 1, pageSize: 20, sortBy: 'Name', sortDesc: false }),
     )
+  })
+
+  it('點選欄位標題依服務代碼、網域排序（後端排序，重設到第一頁）', async () => {
+    searchServices.mockResolvedValue(page(SERVICES))
+    renderWithProviders(<ServicesPage />, { route: '/services' })
+    await screen.findByText('訂單 API')
+    const lastQuery = () => searchServices.mock.lastCall?.[0]
+
+    await userEvent.click(screen.getByRole('columnheader', { name: /服務代碼/ }))
+    await waitFor(() => expect(lastQuery()).toMatchObject({ sortBy: 'ServiceKey', sortDesc: false, pageIndex: 1 }))
+
+    await userEvent.click(screen.getByRole('columnheader', { name: /服務代碼/ }))
+    await waitFor(() => expect(lastQuery()).toMatchObject({ sortBy: 'ServiceKey', sortDesc: true }))
+
+    await userEvent.click(screen.getByRole('columnheader', { name: /網域/ }))
+    await waitFor(() => expect(lastQuery()).toMatchObject({ sortBy: 'Host', sortDesc: false }))
+    expect(screen.getByRole('columnheader', { name: /網域/ })).toHaveAttribute('aria-sort', 'ascending')
   })
 
   it('點選列進入服務頁', async () => {

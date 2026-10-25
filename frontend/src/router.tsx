@@ -36,4 +36,5 @@ export const router = createBrowserRouter([
       },
     ],
   },
-])
+  // 管理介面掛在 vite.config.ts 的 base（/admin/）底下
+], { basename: import.meta.env.BASE_URL })

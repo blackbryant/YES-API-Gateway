@@ -44,7 +44,9 @@ export function PublishDialog({ onClose, onPublished }: PublishDialogProps) {
   const [submitIssues, setSubmitIssues] = useState<{ token: string; issues: ValidationIssue[] } | null>(null)
 
   const currentIssues = (submitIssues && submitIssues.token === data?.draftToken ? submitIssues.issues : data?.issues) ?? []
-  const canSubmit = !!data && data.changes.length > 0 && currentIssues.length === 0 && note.trim().length > 0
+  // 警告只提醒，不影響是否可發佈
+  const warnings = data?.warnings ?? []
+  const canSubmit =!!data && data.changes.length > 0 && currentIssues.length === 0 && note.trim().length > 0
 
   const issueText = (issue: ValidationIssue) => {
     const key = `issues.${issue.code}`
@@ -52,6 +54,34 @@ export function PublishDialog({ onClose, onPublished }: PublishDialogProps) {
     const text = t(key, params)
     return text === key ? t('issues.unknown', { code: issue.code }) : text
   }
+
+  // 驗證錯誤與警告共用；有服務的項目可點擊導向該服務
+  const issueList = (items: ValidationIssue[]) => (
+    <List
+      size="small"
+      dataSource={items}
+      renderItem={(issue) => (
+        <List.Item className="px-0">
+          {issue.serviceId !== null ? (
+            <Button
+              type="link"
+              className="h-auto p-0 text-left whitespace-normal"
+              icon={<CircleAlert size={ICON_SIZE} aria-hidden />}
+              onClick={() => {
+                onClose()
+                navigate(serviceDetailPath(issue.serviceId!))
+              }}
+            >
+              {issue.serviceName && `${issue.serviceName}：`}
+              {issueText(issue)}
+            </Button>
+          ) : (
+            <span>{issueText(issue)}</span>
+          )}
+        </List.Item>
+      )}
+    />
+  )
 
   const submit = async (preview: PublishPreview) => {
     setSubmitting(true)
@@ -120,33 +150,12 @@ export function PublishDialog({ onClose, onPublished }: PublishDialogProps) {
                 type="error"
                 showIcon
                 message={t('publish.issues', { count: currentIssues.length })}
-                description={
-                  <List
-                    size="small"
-                    dataSource={currentIssues}
-                    renderItem={(issue) => (
-                      <List.Item className="px-0">
-                        {issue.serviceId !== null ? (
-                          <Button
-                            type="link"
-                            className="h-auto p-0 text-left whitespace-normal"
-                            icon={<CircleAlert size={ICON_SIZE} aria-hidden />}
-                            onClick={() => {
-                              onClose()
-                              navigate(serviceDetailPath(issue.serviceId!))
-                            }}
-                          >
-                            {issue.serviceName && `${issue.serviceName}：`}
-                            {issueText(issue)}
-                          </Button>
-                        ) : (
-                          <span>{issueText(issue)}</span>
-                        )}
-                      </List.Item>
-                    )}
-                  />
-                }
+                description={issueList(currentIssues)}
               />
+            )}
+
+            {warnings.length > 0 && (
+              <Alert type="warning" showIcon message={t('publish.warnings', { count: warnings.length })} description={issueList(warnings)} />
             )}
 
             <div className="flex flex-col gap-1">

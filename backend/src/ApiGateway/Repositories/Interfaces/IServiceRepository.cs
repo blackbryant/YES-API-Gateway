@@ -1,3 +1,4 @@
+using ApiGateway.Models.DTOs;
 using ApiGateway.Models.Entities;
 
 namespace ApiGateway.Repositories.Interfaces;
@@ -20,8 +21,8 @@ public sealed record ServiceAggregate(
 /// <summary>實驗與所屬服務</summary>
 public sealed record ExperimentOwner(string ExperimentKey, long ServiceId, string ServiceName);
 
-/// <summary>服務列表單列（含入口數與網域彙整）</summary>
-public sealed record ServiceListRow(YarpService Service, int RouteCount, string[] Hosts);
+/// <summary>服務列表單列（含入口數、網域與路徑彙整）</summary>
+public sealed record ServiceListRow(YarpService Service, int RouteCount, string[] Hosts, string[] Paths);
 
 /// <summary>
 /// 服務聚合的資料存取（取代分散的 Route / Experiment Repository，避免 Service 依賴過多）。
@@ -29,7 +30,7 @@ public sealed record ServiceListRow(YarpService Service, int RouteCount, string[
 /// </summary>
 public interface IServiceRepository
 {
-    Task<(IReadOnlyList<ServiceListRow> Items, int TotalCount)> SearchAsync(string? keyword, string? tag, int skip, int take, CancellationToken ct = default);
+    Task<(IReadOnlyList<ServiceListRow> Items, int TotalCount)> SearchAsync(string? keyword, string? tag, ServiceSortField sortBy, bool sortDesc, int skip, int take, CancellationToken ct = default);
 
     Task<bool> ExistsByKeyAsync(string serviceKey, long? excludeId, CancellationToken ct = default);
 

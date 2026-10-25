@@ -192,16 +192,24 @@ export interface ServiceSummary {
   isActive: boolean
   routeCount: number
   hosts: string[]
+  /** 各入口的路徑（依入口優先順序） */
+  paths: string[]
   routingMode: RoutingMode
   hasUnpublishedChanges: boolean
   updatedAt: string
 }
+
+/** 服務列表排序欄位；Host 依各服務字母順序最前的網域，沒有網域的服務排最後 */
+export type ServiceSortField = 'Name' | 'ServiceKey' | 'Host'
 
 export interface ServiceQuery {
   keyword?: string
   tag?: string
   pageIndex: number
   pageSize: number
+  /** 未指定時依名稱升冪 */
+  sortBy?: ServiceSortField
+  sortDesc?: boolean
 }
 
 export interface PagedResult<T> {
@@ -238,6 +246,8 @@ export interface PublishPreview {
   draftToken: string
   changes: ChangeItem[]
   issues: ValidationIssue[]
+  /** 不阻擋發佈的提醒 */
+  warnings: ValidationIssue[]
   canPublish: boolean
 }
 

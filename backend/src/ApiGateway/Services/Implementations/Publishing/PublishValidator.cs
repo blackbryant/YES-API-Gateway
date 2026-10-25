@@ -58,6 +58,40 @@ public static partial class PublishValidator
         return issues;
     }
 
+    /// <summary>不阻擋發佈的提醒（發佈預覽顯示）。只檢查會輸出到閘道的入口與啟用的主機。</summary>
+    public static IReadOnlyList<ValidationIssue> Warn(ConfigSnapshot snapshot)
+    {
+        var warnings = new List<ValidationIssue>();
+        var services = snapshot.Services.Where(s => s.IsActive).ToDictionary(s => s.Id);
+        var backendAuthorities = snapshot.Destinations
+            .Where(d => d.IsActive)
+            .SelectMany(d => Authorities(d.Address).Select(a => (Authority: a, d.Address)))
+            .ToLookup(x => x.Authority, x => x.Address, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var route in snapshot.Routes.Where(r => r.IsActive && services.ContainsKey(r.ServiceId)))
+        {
+            foreach (var host in route.MatchHosts.Where(h => backendAuthorities.Contains(h)))
+            {
+                warnings.Add(Issue(PublishIssueCodes.RouteHostIsBackendAddress, services[route.ServiceId], route.RouteKey, nameof(route.MatchHosts),
+                    ("host", host), ("address", backendAuthorities[host].First())));
+            }
+        }
+
+        return warnings;
+    }
+
+    /// <summary>主機位址可對應的網域寫法：host:port，以及使用預設埠時的 host</summary>
+    private static IEnumerable<string> Authorities(string address)
+    {
+        if (!Uri.TryCreate(address, UriKind.Absolute, out var uri))
+        {
+            return [];
+        }
+
+        var withPort = $"{uri.Host}:{uri.Port}";
+        return uri.IsDefaultPort ? [uri.Host, withPort] : [withPort];
+    }
+
     private static void ValidateRouteFields(YarpRoute route, YarpService service, GatewayOptions options, List<ValidationIssue> issues)
     {
         if (!IsValidPath(route.MatchPath))

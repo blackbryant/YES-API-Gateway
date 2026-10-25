@@ -140,6 +140,41 @@ function validate(): ValidationIssue[] {
   return issues
 }
 
+/** 與後端 PublishValidator.Warn 相同：入口網域等於某台啟用主機的 host:port（預設埠時也比對 host） */
+function warn(): ValidationIssue[] {
+  const authorities = (address: string): string[] => {
+    try {
+      const url = new URL(address)
+      const port = url.port || (url.protocol === 'https:' ? '443' : '80')
+      return url.port ? [`${url.hostname}:${port}`] : [url.hostname, `${url.hostname}:${port}`]
+    } catch {
+      return []
+    }
+  }
+  const backends = new Map<string, string>()
+  for (const s of state.services) {
+    for (const h of [...s.hosts, ...(s.experiment?.variants.flatMap((v) => v.hosts) ?? [])].filter((x) => x.isActive)) {
+      for (const a of authorities(h.address)) if (!backends.has(a)) backends.set(a, h.address)
+    }
+  }
+
+  return state.services
+    .filter((s) => s.isActive)
+    .flatMap((s) => s.routes.filter((r) => r.isActive).map((r) => ({ s, r })))
+    .flatMap(({ s, r }) =>
+      r.matchHosts
+        .filter((host) => backends.has(host.toLowerCase()))
+        .map((host) => ({
+          code: 'ROUTE_HOST_IS_BACKEND_ADDRESS',
+          serviceId: s.id,
+          serviceName: s.displayName,
+          routeKey: r.routeKey,
+          field: 'MatchHosts',
+          params: { host, address: backends.get(host.toLowerCase())! },
+        })),
+    )
+}
+
 function summaryOf(service: ServiceDetail): ServiceSummary {
   return {
     id: service.id,
@@ -148,7 +183,8 @@ function summaryOf(service: ServiceDetail): ServiceSummary {
     tags: service.tags,
     isActive: service.isActive,
     routeCount: service.routes.length,
-    hosts: [...new Set(service.routes.flatMap((r) => r.matchHosts))],
+    hosts: [...new Set(service.routes.flatMap((r) => r.matchHosts))].sort(),
+    paths: [...new Set([...service.routes].sort((a, b) => a.order - b.order).map((r) => r.matchPath))],
     routingMode: service.routingMode,
     hasUnpublishedChanges: state.pending.some((c) => c.serviceId === service.id),
     updatedAt: service.updatedAt,
@@ -184,6 +220,19 @@ export const serviceStore = {
           s.routes.some((r) => r.matchPath.toLowerCase().includes(keyword) || r.matchHosts.some((h) => h.includes(keyword)))) &&
         (!query.tag || s.tags.includes(query.tag)),
     )
+    // 與後端 ServiceRepository 相同：指定欄位 → 名稱；網域排序時沒有網域的服務排最後
+    const firstHost = (s: ServiceDetail) => s.routes.flatMap((r) => r.matchHosts).sort()[0]
+    const dir = query.sortDesc ? -1 : 1
+    const compare = (a: ServiceDetail, b: ServiceDetail) => {
+      if (query.sortBy === 'ServiceKey') return dir * a.serviceKey.localeCompare(b.serviceKey)
+      if (query.sortBy === 'Host') {
+        const [ha, hb] = [firstHost(a), firstHost(b)]
+        if (!ha || !hb) return ha === hb ? 0 : ha ? -1 : 1
+        return dir * ha.localeCompare(hb)
+      }
+      return dir * a.displayName.localeCompare(b.displayName)
+    }
+    matched.sort((a, b) => compare(a, b) || a.displayName.localeCompare(b.displayName) || a.id - b.id)
     const start = (query.pageIndex - 1) * query.pageSize
     return {
       items: matched.slice(start, start + query.pageSize).map(summaryOf),
@@ -225,7 +274,7 @@ export const serviceStore = {
     track(service, 'Removed')
   },
 
-  systemRoutes: (): SystemRoutes => ({ healthCheckPath: '/health', reservedPathPrefixes: ['/health', '/api/v1', '/swagger'], staticRoutes: [] }),
+  systemRoutes: (): SystemRoutes => ({ healthCheckPath: '/health', reservedPathPrefixes: ['/health', '/api/v1', '/swagger', '/admin'], staticRoutes: [] }),
 
   preview(): PublishPreview {
     const issues = validate()
@@ -234,6 +283,7 @@ export const serviceStore = {
       draftToken: String(state.draftToken),
       changes: structuredClone(state.pending),
       issues,
+      warnings: warn(),
       canPublish: state.pending.length > 0 && issues.length === 0,
     }
   },

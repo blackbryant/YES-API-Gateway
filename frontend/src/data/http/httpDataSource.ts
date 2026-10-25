@@ -15,7 +15,7 @@ import type {
 
 const HTTP_UNAUTHORIZED = 401
 
-function toQueryString(params: Record<string, string | number | undefined>): string {
+function toQueryString(params: Record<string, string | number | boolean | undefined>): string {
   const search = new URLSearchParams()
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== '') search.set(key, String(value))
@@ -40,7 +40,14 @@ export const httpDataSource: DataSource = {
 
   searchServices: (query) =>
     apiClient.getPaged<ServiceSummary>(
-      `/services?${toQueryString({ keyword: query.keyword, tag: query.tag, pageIndex: query.pageIndex, pageSize: query.pageSize })}`,
+      `/services?${toQueryString({
+        keyword: query.keyword,
+        tag: query.tag,
+        pageIndex: query.pageIndex,
+        pageSize: query.pageSize,
+        sortBy: query.sortBy,
+        sortDesc: query.sortDesc,
+      })}`,
     ),
   getService: (id) => apiClient.get<ServiceDetail>(`/services/${id}`),
   createService: (request) => apiClient.post<ServiceDetail>('/services', request),

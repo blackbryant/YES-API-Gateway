@@ -15,3 +15,15 @@ public sealed class DbFactAttribute : FactAttribute
 
     public static string? ConnectionString => Environment.GetEnvironmentVariable(ConnectionStringVariable);
 }
+
+/// <summary>DbFactAttribute 的 Theory 版本</summary>
+public sealed class DbTheoryAttribute : TheoryAttribute
+{
+    public DbTheoryAttribute()
+    {
+        if (string.IsNullOrWhiteSpace(DbFactAttribute.ConnectionString))
+        {
+            Skip = $"{DbFactAttribute.ConnectionStringVariable} not set";
+        }
+    }
+}

@@ -41,4 +41,9 @@ public static class PublishIssueCodes
     public const string ExperimentTimeRange = "EXPERIMENT_TIME_RANGE";
     public const string ExperimentEnded = "EXPERIMENT_ENDED";
     public const string ExperimentRollbackRule = "EXPERIMENT_ROLLBACK_RULE";
+
+    // ---- 警告：僅提醒，不阻擋發佈 ----
+
+    /// <summary>入口網域與某台主機位址相同（常見誤填：把後端位址填進入口網域）</summary>
+    public const string RouteHostIsBackendAddress = "ROUTE_HOST_IS_BACKEND_ADDRESS";
 }

@@ -1,6 +1,6 @@
 namespace ApiGateway.Models.DTOs;
 
-/// <summary>發佈驗證錯誤（Code 見 PublishIssueCodes；畫面文字由前端依 Code + Params 組字）</summary>
+/// <summary>發佈驗證錯誤或警告（Code 見 PublishIssueCodes；畫面文字由前端依 Code + Params 組字）</summary>
 public sealed record ValidationIssue(
     string Code,
     long? ServiceId,
@@ -40,6 +40,7 @@ public sealed record PublishPreviewDto(
     string DraftToken,
     IReadOnlyList<ChangeItem> Changes,
     IReadOnlyList<ValidationIssue> Issues,
+    IReadOnlyList<ValidationIssue> Warnings,
     bool CanPublish);
 
 public sealed record PublishResultDto(string VersionNo, string Checksum, DateTimeOffset PublishedAt, int ChangeCount);

@@ -7,6 +7,8 @@ import { defineConfig, loadEnv } from 'vite'
 export const DEV_SERVER_PORT = 5180
 /** Playwright 端對端測試專用的開發伺服器埠（範例資料，與串接後端的 5180 分開） */
 export const E2E_SERVER_PORT = 5181
+/** 管理介面路徑前綴，與後端 AuthRules.AdminUiPrefix 一致；其餘路徑留給閘道入口 */
+export const ADMIN_BASE_PATH = '/admin/'
 /** 未設定 VITE_API_PROXY_TARGET 時，/api 轉送的後端位址 */
 const DEFAULT_API_PROXY_TARGET = 'http://localhost:5072'
 const PREVIEW_SERVER_PORT = 4180
@@ -21,6 +23,7 @@ export default defineConfig(({ mode }) => {
   const useMockDataSource = mode === E2E_MODE || process.env.VITEST === 'true'
 
   return {
+    base: ADMIN_BASE_PATH,
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

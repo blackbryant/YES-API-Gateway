@@ -190,6 +190,7 @@
       "name": "名稱",
       "serviceKey": "服務代碼",
       "hosts": "網域",
+      "paths": "路徑",
       "routeCount": "入口數",
       "routingMode": "分流方式",
       "status": "狀態"
@@ -316,6 +317,7 @@
     "changes": "本次變更（{{count}}）",
     "noChanges": "沒有可發佈的變更",
     "issues": "需要先修正的問題（{{count}}）",
+    "warnings": "請確認以下設定（{{count}}），不影響發佈",
     "note": "發佈說明",
     "notePlaceholder": "說明本次變更內容（必填）",
     "noteRequired": "請填寫發佈說明",
@@ -354,6 +356,7 @@
     "EXPERIMENT_TIME_RANGE": "A/B 實驗的結束時間必須晚於開始時間",
     "EXPERIMENT_ENDED": "A/B 實驗的結束時間已過",
     "EXPERIMENT_ROLLBACK_RULE": "A/B 實驗的自動回退條件不正確",
+    "ROUTE_HOST_IS_BACKEND_ADDRESS": "入口 {{routeKey}} 的網域 {{host}} 與主機位址 {{address}} 相同。網域是用戶端連入閘道時使用的網域，不是後端位址；不限制網域請留空",
     "YARP_CONFIG_INVALID": "閘道設定驗證失敗：{{message}}",
     "unknown": "設定驗證失敗（{{code}}）"
   },

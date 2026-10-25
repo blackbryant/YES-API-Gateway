@@ -59,7 +59,17 @@ public sealed record ServiceQuery(
     string? Keyword,
     string? Tag,
     int PageIndex = PagingRules.DefaultPageIndex,
-    int PageSize = PagingRules.DefaultPageSize);
+    int PageSize = PagingRules.DefaultPageSize,
+    ServiceSortField SortBy = ServiceSortField.Name,
+    bool SortDesc = false);
+
+/// <summary>服務列表排序欄位；Host 依各服務入口網域中字母順序最前者，沒有網域的服務一律排在最後</summary>
+public enum ServiceSortField
+{
+    Name,
+    ServiceKey,
+    Host,
+}
 
 public sealed record ServiceActiveRequest([property: JsonRequired] bool IsActive);
 
@@ -73,6 +83,7 @@ public sealed record ServiceSummaryDto(
     bool IsActive,
     int RouteCount,
     string[] Hosts,
+    string[] Paths,
     RoutingMode RoutingMode,
     bool HasUnpublishedChanges,
     DateTimeOffset UpdatedAt);

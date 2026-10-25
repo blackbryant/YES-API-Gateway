@@ -190,6 +190,7 @@
       "name": "Name",
       "serviceKey": "Service key",
       "hosts": "Domains",
+      "paths": "Paths",
       "routeCount": "Entries",
       "routingMode": "Traffic split",
       "status": "Status"
@@ -316,6 +317,7 @@
     "changes": "Changes ({{count}})",
     "noChanges": "Nothing to publish",
     "issues": "Fix these first ({{count}})",
+    "warnings": "Please double-check ({{count}}); publishing is still allowed",
     "note": "Release note",
     "notePlaceholder": "Describe this change (required)",
     "noteRequired": "Please enter a release note",
@@ -354,6 +356,7 @@
     "EXPERIMENT_TIME_RANGE": "The A/B experiment end time must be after its start time",
     "EXPERIMENT_ENDED": "The A/B experiment end time has passed",
     "EXPERIMENT_ROLLBACK_RULE": "The A/B experiment auto-rollback rule is invalid",
+    "ROUTE_HOST_IS_BACKEND_ADDRESS": "Entry {{routeKey}} uses domain {{host}}, which matches host address {{address}}. Domains are what clients use to reach the gateway, not backend addresses; leave empty to accept any domain",
     "YARP_CONFIG_INVALID": "Gateway configuration check failed: {{message}}",
     "unknown": "Configuration check failed ({{code}})"
   },

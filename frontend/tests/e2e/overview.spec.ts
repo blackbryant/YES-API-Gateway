@@ -4,7 +4,7 @@ import { loginAs } from './helpers'
 test.describe('總覽與頂部列（quickstart 情境 4、5、6）', () => {
   test.beforeEach(async ({ page }) => {
     await loginAs(page)
-    await page.goto('/')
+    await page.goto('./')
   })
 
   test('需要處理置頂且主機異常排第一，四張統計卡片', async ({ page }) => {

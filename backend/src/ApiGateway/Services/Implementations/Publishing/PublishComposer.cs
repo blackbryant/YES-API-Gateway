@@ -15,6 +15,9 @@ public interface IPublishComposer
 
     /// <summary>只執行本系統規則驗證（發佈預覽使用）</summary>
     IReadOnlyList<ValidationIssue> Validate(ConfigSnapshot snapshot, DateTimeOffset now);
+
+    /// <summary>不阻擋發佈的提醒（發佈預覽使用）</summary>
+    IReadOnlyList<ValidationIssue> Warn(ConfigSnapshot snapshot);
 }
 
 public sealed class PublishComposer : IPublishComposer
@@ -32,6 +35,8 @@ public sealed class PublishComposer : IPublishComposer
 
     public IReadOnlyList<ValidationIssue> Validate(ConfigSnapshot snapshot, DateTimeOffset now) =>
         PublishValidator.Validate(snapshot, _options, now);
+
+    public IReadOnlyList<ValidationIssue> Warn(ConfigSnapshot snapshot) => PublishValidator.Warn(snapshot);
 
     public async Task<PublishComposition> ComposeAsync(ConfigSnapshot snapshot, DateTimeOffset now, CancellationToken ct = default)
     {

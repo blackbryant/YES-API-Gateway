@@ -11,7 +11,7 @@ public class PublishValidatorTests
 
     private static readonly GatewayOptions Options = new()
     {
-        ReservedPathPrefixes = ["/health", "/api/v1", "/swagger"],
+        ReservedPathPrefixes = ["/health", "/api/v1", "/swagger", "/admin"],
     };
 
     private static IReadOnlyList<string> Codes(SnapshotFixture f) =>
@@ -162,6 +162,7 @@ public class PublishValidatorTests
     [InlineData("/api/v1/x")]
     [InlineData("/API/V1/{**rest}")]
     [InlineData("/swagger")]
+    [InlineData("/admin/{**path}")]
     public void Validate_ReservedPath_IsRejected(string path)
     {
         var (f, service) = WithService();
@@ -173,6 +174,7 @@ public class PublishValidatorTests
     [Theory]
     [InlineData("/api/v2/x")]
     [InlineData("/healthy")]
+    [InlineData("/administrator")]
     [InlineData("/api/{**rest}")]
     public void Validate_NonReservedPath_IsAccepted(string path)
     {
@@ -299,5 +301,55 @@ public class PublishValidatorTests
         experiment.AutoRollbackRule = """{"metric":"5xxRate","thresholdPercent":100,"durationMin":60,"minSamples":1}""";
 
         Assert.Empty(Codes(f));
+    }
+
+    // ---------------------------------------------------------------- 警告（不阻擋發佈）
+
+    private static IReadOnlyList<string> WarningCodes(SnapshotFixture f) =>
+        PublishValidator.Warn(f.Build()).Select(i => i.Code).ToList();
+
+    [Theory]
+    [InlineData("http://backend-a:9001", "backend-a:9001")]
+    [InlineData("http://Backend-A:9001/base", "backend-a:9001")]
+    [InlineData("http://api.internal", "api.internal")]
+    [InlineData("https://api.internal", "api.internal:443")]
+    public void Warn_HostSameAsBackendAddress(string address, string host)
+    {
+        var f = new SnapshotFixture();
+        var service = f.AddService("orders-api", clusterId: f.AddCluster(address).Id);
+        f.AddRoute(service, "/a", hosts: [host]);
+
+        var warning = Assert.Single(PublishValidator.Warn(f.Build()));
+        Assert.Equal(PublishIssueCodes.RouteHostIsBackendAddress, warning.Code);
+        Assert.Equal(host, warning.Params!["host"]);
+        Assert.Equal(address, warning.Params["address"]);
+        // 只是提醒，不列入阻擋發佈的錯誤
+        Assert.Empty(Codes(f));
+    }
+
+    [Theory]
+    [InlineData("http://backend-a:9001", "backend-a")]
+    [InlineData("http://backend-a:9001", "backend-a:9002")]
+    [InlineData("http://api.internal", "api.internal:8080")]
+    public void Warn_DifferentHost_NoWarning(string address, string host)
+    {
+        var f = new SnapshotFixture();
+        var service = f.AddService("orders-api", clusterId: f.AddCluster(address).Id);
+        f.AddRoute(service, "/a", hosts: [host]);
+
+        Assert.Empty(WarningCodes(f));
+    }
+
+    [Fact]
+    public void Warn_InactiveBackendOrRoute_NoWarning()
+    {
+        var f = new SnapshotFixture();
+        var cluster = f.AddCluster("http://backend-a:9001", hostActive: false);
+        f.AddHost(cluster, "http://backend-b:9002");
+        var service = f.AddService("orders-api", clusterId: cluster.Id);
+        f.AddRoute(service, "/a", hosts: ["backend-a:9001"]);
+        f.AddRoute(service, "/b", hosts: ["backend-b:9002"], active: false);
+
+        Assert.Empty(WarningCodes(f));
     }
 }

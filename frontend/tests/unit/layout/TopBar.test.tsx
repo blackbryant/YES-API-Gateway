@@ -50,7 +50,7 @@ describe('TopBar 草稿狀態', () => {
 
   it('點發佈開啟發佈對話框', async () => {
     getDraftStatus.mockResolvedValue({ activeVersion: '2026101901', pendingChanges: 3 })
-    vi.mocked(dataSource.getPublishPreview).mockResolvedValue({ baseVersion: '2026101901', draftToken: '1', changes: [], issues: [], canPublish: false })
+    vi.mocked(dataSource.getPublishPreview).mockResolvedValue({ baseVersion: '2026101901', draftToken: '1', changes: [], issues: [], warnings: [], canPublish: false })
     renderWithProviders(<TopBar />)
 
     await userEvent.click(await screen.findByRole('button', { name: '發佈' }))

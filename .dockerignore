@@ -10,3 +10,5 @@ frontend/dist/
 yes-specs/
 **/.env
 **/coverage/
+
+simulation/

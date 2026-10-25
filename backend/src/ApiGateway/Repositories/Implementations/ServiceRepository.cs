@@ -1,4 +1,5 @@
 using ApiGateway.Infrastructure.Data;
+using ApiGateway.Models.DTOs;
 using ApiGateway.Models.Entities;
 using ApiGateway.Repositories.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,7 @@ public sealed class ServiceRepository : IServiceRepository
     }
 
     public async Task<(IReadOnlyList<ServiceListRow> Items, int TotalCount)> SearchAsync(
-        string? keyword, string? tag, int skip, int take, CancellationToken ct = default)
+        string? keyword, string? tag, ServiceSortField sortBy, bool sortDesc, int skip, int take, CancellationToken ct = default)
     {
         var query = _db.Services.AsNoTracking();
 
@@ -37,29 +38,43 @@ public sealed class ServiceRepository : IServiceRepository
         }
 
         var total = await query.CountAsync(ct);
-        var page = await query
-            .OrderBy(s => s.DisplayName)
-            .ThenBy(s => s.Id)
+        var rows = query.Select(s => new
+        {
+            Service = s,
+            RouteCount = _db.Routes.Count(r => r.ServiceId == s.Id),
+            // 排序用：入口網域中字母順序最前者（網域已於儲存時轉小寫）；沒有網域時為 null
+            FirstHost = _db.Routes.Where(r => r.ServiceId == s.Id).SelectMany(r => r.MatchHosts).Min(),
+        });
+
+        // 依指定欄位排序後再以名稱、Id 為次序，確保分頁穩定；網域排序時沒有網域的服務不論升降冪都排最後
+        var ordered = sortBy switch
+        {
+            ServiceSortField.ServiceKey => sortDesc ? rows.OrderByDescending(x => x.Service.ServiceKey) : rows.OrderBy(x => x.Service.ServiceKey),
+            ServiceSortField.Host => sortDesc
+                ? rows.OrderBy(x => x.FirstHost == null).ThenByDescending(x => x.FirstHost)
+                : rows.OrderBy(x => x.FirstHost == null).ThenBy(x => x.FirstHost),
+            _ => sortDesc ? rows.OrderByDescending(x => x.Service.DisplayName) : rows.OrderBy(x => x.Service.DisplayName),
+        };
+        var page = await ordered
+            .ThenBy(x => x.Service.DisplayName)
+            .ThenBy(x => x.Service.Id)
             .Skip(skip)
             .Take(take)
-            .Select(s => new
-            {
-                Service = s,
-                RouteCount = _db.Routes.Count(r => r.ServiceId == s.Id),
-            })
             .ToListAsync(ct);
 
-        // 網域彙整：一次取回本頁所有入口的網域（不逐筆查詢）
+        // 網域與路徑彙整：一次取回本頁所有入口（不逐筆查詢）
         var ids = page.Select(x => x.Service.Id).ToList();
-        var hosts = await _db.Routes.AsNoTracking()
+        var routes = await _db.Routes.AsNoTracking()
             .Where(r => ids.Contains(r.ServiceId))
-            .Select(r => new { r.ServiceId, r.MatchHosts })
+            .OrderBy(r => r.Order)
+            .ThenBy(r => r.Id)
+            .Select(r => new { r.ServiceId, r.MatchHosts, r.MatchPath })
             .ToListAsync(ct);
-        var hostsByService = hosts
-            .GroupBy(x => x.ServiceId)
-            .ToDictionary(g => g.Key, g => g.SelectMany(x => x.MatchHosts).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToArray());
+        var routesByService = routes.ToLookup(x => x.ServiceId);
+        string[] HostsOf(long id) => routesByService[id].SelectMany(x => x.MatchHosts).Distinct(StringComparer.OrdinalIgnoreCase).Order(StringComparer.OrdinalIgnoreCase).ToArray();
+        string[] PathsOf(long id) => routesByService[id].Select(x => x.MatchPath).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
-        return (page.Select(x => new ServiceListRow(x.Service, x.RouteCount, hostsByService.GetValueOrDefault(x.Service.Id, []))).ToList(), total);
+        return (page.Select(x => new ServiceListRow(x.Service, x.RouteCount, HostsOf(x.Service.Id), PathsOf(x.Service.Id))).ToList(), total);
     }
 
     public Task<bool> ExistsByKeyAsync(string serviceKey, long? excludeId, CancellationToken ct = default) =>

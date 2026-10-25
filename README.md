@@ -57,11 +57,13 @@ dotnet ef migrations script --idempotent --project src/ApiGateway --output db/02
 | 設定 | 預設 | 說明 |
 |---|---|---|
 | `Gateway:HealthCheck:Path` | `/health` | 系統健康檢查端點，資料庫異常或尚無生效版本時仍會回應 |
-| `Gateway:ReservedPathPrefixes` | `/health`、`/api/v1`、`/swagger` | 系統保留路徑；服務入口與其重疊時發佈驗證會擋下 |
+| `Gateway:ReservedPathPrefixes` | `/health`、`/api/v1`、`/swagger`、`/admin` | 系統保留路徑；服務入口與其重疊時發佈驗證會擋下 |
 | `Gateway:NodeId` | 機器名稱 | 多台閘道共用同一資料庫時，各節點設定不同的識別，供「閘道節點同步狀態」判斷 |
 | `ReverseProxy:Routes` / `Clusters` | 空 | 靜態代理路由（YARP 原生格式），與服務頁發佈的動態路由並存 |
 
 服務、入口與 A/B 實驗在管理介面修改後先存為草稿，按頂部列「發佈」才會生效；各節點每 5 秒比對生效版本校驗碼自動同步，不需重啟。
+
+管理介面固定在 `/admin/` 底下（打包時放在 `wwwroot/admin/`，開發時為 `http://localhost:5180/admin/`），`/` 會導向該處；其餘未命中入口的路徑回 404。`/admin` 必須保留在 `Gateway:ReservedPathPrefixes`，避免入口與管理介面重疊。
 
 ## 測試
 

@@ -383,16 +383,25 @@ public class ServiceServiceTests
         _read.Setup(x => x.GetActivePublishedAtAsync(It.IsAny<CancellationToken>())).ReturnsAsync(publishedAt);
         var changed = new YarpService { Id = 1, ServiceKey = "a", DisplayName = "A", UpdatedAt = publishedAt.AddMinutes(1), DefaultClusterId = 5 };
         var unchanged = new YarpService { Id = 2, ServiceKey = "b", DisplayName = "B", UpdatedAt = publishedAt.AddMinutes(-1), DefaultExperimentId = 7 };
-        _repo.Setup(x => x.SearchAsync("ord", "payment", 20, 20, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(([new ServiceListRow(changed, 2, ["api.example.com"]), new ServiceListRow(unchanged, 1, [])], 22));
+        _repo.Setup(x => x.SearchAsync("ord", "payment", ServiceSortField.Host, true, 20, 20, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(([new ServiceListRow(changed, 2, ["api.example.com"], ["/api/orders/{**catch-all}"]), new ServiceListRow(unchanged, 1, [], [])], 22));
 
-        var result = await _sut.SearchAsync(AdminId, new ServiceQuery("ord", "payment", 2, 20));
+        var result = await _sut.SearchAsync(AdminId, new ServiceQuery("ord", "payment", 2, 20, ServiceSortField.Host, SortDesc: true));
 
         Assert.Equal(22, result.TotalCount);
         Assert.True(result.Data[0].HasUnpublishedChanges);
         Assert.False(result.Data[1].HasUnpublishedChanges);
         Assert.Equal(RoutingMode.AbTest, result.Data[1].RoutingMode);
         Assert.Equal(2, result.Data[0].RouteCount);
+        Assert.Equal(["/api/orders/{**catch-all}"], result.Data[0].Paths);
+    }
+
+    [Fact]
+    public async Task Search_UndefinedSortField_Throws()
+    {
+        var ex = await Assert.ThrowsAsync<ArgumentException>(() => _sut.SearchAsync(AdminId, new ServiceQuery(null, null, SortBy: (ServiceSortField)99)));
+
+        Assert.Equal(ErrorCodes.ValidationFailed, ex.Message);
     }
 
     // ---------------------------------------------------------------- 測試資料

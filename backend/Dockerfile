@@ -17,7 +17,7 @@ COPY backend/src/ApiGateway/ApiGateway.csproj backend/src/ApiGateway/
 RUN dotnet restore backend/src/ApiGateway/ApiGateway.csproj
 COPY backend/src/ backend/src/
 RUN dotnet publish backend/src/ApiGateway/ApiGateway.csproj -c Release -o /app --no-restore
-COPY --from=frontend /src/frontend/dist /app/wwwroot
+COPY --from=frontend /src/frontend/dist /app/wwwroot/admin
 
 # ---- 執行 ----
 FROM mcr.microsoft.com/dotnet/aspnet:10.0

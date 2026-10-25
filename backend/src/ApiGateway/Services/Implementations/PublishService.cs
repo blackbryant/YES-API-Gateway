@@ -65,8 +65,9 @@ public sealed class PublishService : IPublishService
         var active = await _versions.GetActiveAsync(ct);
         var changes = SnapshotDiffer.Diff(active is null ? null : ConfigSnapshot.Deserialize(active.Snapshot), snapshot);
         var issues = _composer.Validate(snapshot, _timeProvider.GetUtcNow());
+        var warnings = _composer.Warn(snapshot);
 
-        return new PublishPreviewDto(active?.VersionNo, ToDraftToken(draft), changes, issues, changes.Count > 0 && issues.Count == 0);
+        return new PublishPreviewDto(active?.VersionNo, ToDraftToken(draft), changes, issues, warnings, changes.Count > 0 && issues.Count == 0);
     }
 
     public async Task<PublishResultDto> PublishAsync(long? operatorId, PublishRequest request, CancellationToken ct = default)

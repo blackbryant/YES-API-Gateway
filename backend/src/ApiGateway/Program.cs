@@ -223,7 +223,10 @@ try
     app.Map(AuthRules.AdminApiPrefix + "/{**path}", (HttpContext context) =>
         Results.Json(ApiResponse.Fail(ErrorCodes.NotFound, "API not found"), statusCode: StatusCodes.Status404NotFound))
         .Add(SystemEndpointOrder);
-    app.MapFallbackToFile("index.html", spaFileOptions);
+    // 管理介面只在 /admin 底下（前端路由交給 index.html）；其餘未命中的路徑回 404，不再回管理介面頁面
+    app.MapFallbackToFile(AuthRules.AdminUiPrefix + "/{*path:nonfile}", AuthRules.AdminUiIndexFile, spaFileOptions).Add(SystemEndpointOrder);
+    // 根路徑導向管理介面；以 fallback 註冊，動態路由若有對應 / 的入口仍以入口為準
+    app.MapFallback("/", () => Results.Redirect(AuthRules.AdminUiPrefix + "/"));
 
     await app.RunAsync();
 }

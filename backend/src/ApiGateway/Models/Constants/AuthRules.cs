@@ -24,6 +24,12 @@ public static class AuthRules
     /// <summary>Admin API 路由前綴；此前綴下預設全部需要登入</summary>
     public const string AdminApiPrefix = "/api/v1";
 
+    /// <summary>管理介面（SPA）路徑前綴；需與前端 vite.config.ts 的 base 一致，並列入 Gateway:ReservedPathPrefixes</summary>
+    public const string AdminUiPrefix = "/admin";
+
+    /// <summary>管理介面入口檔（相對於 wwwroot）</summary>
+    public const string AdminUiIndexFile = "admin/index.html";
+
     /// <summary>Admin API 中不需登入的路徑（完全比對，不分大小寫）</summary>
     public static readonly IReadOnlyList<string> AnonymousPaths =
     [

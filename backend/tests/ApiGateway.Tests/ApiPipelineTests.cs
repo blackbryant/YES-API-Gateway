@@ -16,20 +16,39 @@ namespace ApiGateway.Tests;
 [Collection(WebHostCollection.Name)]
 public class ApiPipelineTests : IClassFixture<ApiPipelineTests.Factory>
 {
+    private readonly Factory _factory;
     private readonly HttpClient _client;
 
     public ApiPipelineTests(Factory factory)
     {
+        _factory = factory;
         _client = factory.CreateClient();
     }
 
     public sealed class Factory : WebApplicationFactory<Program>
     {
+        /// <summary>模擬打包後的 wwwroot：管理介面放在 admin/ 底下</summary>
+        private readonly string _webRoot = Directory.CreateTempSubdirectory("yes-gw-webroot-").FullName;
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.UseEnvironment("Testing");
             builder.UseSetting("ConnectionStrings:GatewayDb", "Host=127.0.0.1;Port=1;Database=none;Username=none;Timeout=1");
             builder.UseSetting("Jwt:SigningKey", Convert.ToBase64String(RandomNumberGenerator.GetBytes(32)));
+
+            Directory.CreateDirectory(Path.Combine(_webRoot, "admin", "assets"));
+            File.WriteAllText(Path.Combine(_webRoot, "admin", "index.html"), "<!doctype html><title>admin</title>");
+            File.WriteAllText(Path.Combine(_webRoot, "admin", "assets", "app.js"), "console.log('admin')");
+            builder.UseWebRoot(_webRoot);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            base.Dispose(disposing);
+            if (disposing && Directory.Exists(_webRoot))
+            {
+                Directory.Delete(_webRoot, recursive: true);
+            }
         }
     }
 
@@ -88,5 +107,50 @@ public class ApiPipelineTests : IClassFixture<ApiPipelineTests.Factory>
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.False(response.Headers.Contains("Server"));
+    }
+
+    [Theory]
+    [InlineData("/admin")]
+    [InlineData("/admin/")]
+    [InlineData("/admin/services/1")]
+    public async Task AdminUi_PageRoutes_ServeIndexHtml(string path)
+    {
+        var response = await _client.GetAsync(path);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("text/html", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal("no-cache", response.Headers.CacheControl?.ToString());
+    }
+
+    [Fact]
+    public async Task AdminUi_Asset_ServesFile()
+    {
+        var response = await _client.GetAsync("/admin/assets/app.js");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("admin", await response.Content.ReadAsStringAsync());
+    }
+
+    [Theory]
+    [InlineData("/backend-a")]
+    [InlineData("/login")]
+    [InlineData("/admin/assets/missing.js")]
+    public async Task UnmatchedPath_Returns404NotAdminUi(string path)
+    {
+        var response = await _client.GetAsync(path);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.NotEqual("text/html", response.Content.Headers.ContentType?.MediaType);
+    }
+
+    [Fact]
+    public async Task Root_RedirectsToAdminUi()
+    {
+        using var client = _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        var response = await client.GetAsync("/");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/admin/", response.Headers.Location?.OriginalString);
     }
 }

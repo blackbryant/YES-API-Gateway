@@ -23,6 +23,7 @@ const PREVIEW: PublishPreview = {
     { entityType: 'Service', entityKey: 'members-api', serviceId: 2, serviceName: '會員 API', action: 'Modified' },
   ],
   issues: [],
+  warnings: [],
   canPublish: true,
 }
 
@@ -73,6 +74,29 @@ describe('PublishDialog', () => {
     await userEvent.click(screen.getByRole('button', { name: /A\/B 實驗各組比例加總為 90/ }))
     expect(onClose).toHaveBeenCalled()
     expect(screen.getByTestId('location')).toHaveTextContent('/services/1')
+  })
+
+  it('警告只提醒，不停用發佈', async () => {
+    getPublishPreview.mockResolvedValue({
+      ...PREVIEW,
+      warnings: [
+        {
+          code: 'ROUTE_HOST_IS_BACKEND_ADDRESS',
+          serviceId: 1,
+          serviceName: '訂單 API',
+          routeKey: 'orders-api-1',
+          field: 'MatchHosts',
+          params: { host: 'backend-a:9001', address: 'http://backend-a:9001' },
+        },
+      ],
+    })
+    renderDialog()
+
+    expect(await screen.findByText('請確認以下設定（1），不影響發佈')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /網域 backend-a:9001 與主機位址 http:\/\/backend-a:9001 相同/ })).toBeInTheDocument()
+
+    await userEvent.type(screen.getByLabelText('發佈說明'), '上線')
+    expect(screen.getByRole('button', { name: '發佈' })).toBeEnabled()
   })
 
   it('發佈說明為必填', async () => {

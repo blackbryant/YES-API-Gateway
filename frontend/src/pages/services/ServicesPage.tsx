@@ -1,4 +1,5 @@
 import { Button, Empty, Input, Result, Select, Table, Tag, Typography } from 'antd'
+import type { SortOrder } from 'antd/es/table/interface'
 import { CircleCheck, CircleMinus, Plus, RotateCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -7,20 +8,29 @@ import { RoleGate } from '../../components/auth/RoleGate'
 import { ROLES } from '../../constants/app'
 import { ROUTES, serviceDetailPath } from '../../constants/routes'
 import { dataSource } from '../../data/dataSource'
-import type { ServiceSummary } from '../../data/types'
+import type { ServiceSortField, ServiceSummary } from '../../data/types'
 import { useAsyncData } from '../../hooks/useAsyncData'
 import { SystemRoutesSection } from './SystemRoutesSection'
 
 const PAGE_SIZE = 20
 const ICON_SIZE = 14
+const SORT_DIRECTIONS: SortOrder[] = ['ascend', 'descend']
 
-/** 服務列表：依名稱、代碼、網域、路徑、標籤篩選（FR-011、US5） */
+interface ServiceSort {
+  field: ServiceSortField
+  desc: boolean
+}
+
+const DEFAULT_SORT: ServiceSort = { field: 'Name', desc: false }
+
+/** 服務列表：依名稱、代碼、網域、路徑、標籤篩選，可依名稱、服務代碼、網域排序（FR-011、US5） */
 export default function ServicesPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const [keyword, setKeyword] = useState('')
   const [tag, setTag] = useState<string | undefined>()
   const [pageIndex, setPageIndex] = useState(1)
+  const [sort, setSort] = useState<ServiceSort>(DEFAULT_SORT)
 
   return (
     <div className="flex flex-col gap-6">
@@ -48,15 +58,20 @@ export default function ServicesPage() {
       </div>
       {/* 查詢條件改變時以新的 key 重新載入 */}
       <ServiceTable
-        key={`${keyword}|${tag ?? ''}|${pageIndex}`}
+        key={`${keyword}|${tag ?? ''}|${pageIndex}|${sort.field}|${sort.desc}`}
         keyword={keyword}
         tag={tag}
         pageIndex={pageIndex}
+        sort={sort}
         onTagChange={(value) => {
           setTag(value)
           setPageIndex(1)
         }}
         onPageChange={setPageIndex}
+        onSortChange={(value) => {
+          setSort(value)
+          setPageIndex(1)
+        }}
         onOpen={(id) => navigate(serviceDetailPath(id))}
         onAdd={() => navigate(ROUTES.serviceNew)}
       />
@@ -69,16 +84,28 @@ interface ServiceTableProps {
   keyword: string
   tag: string | undefined
   pageIndex: number
+  sort: ServiceSort
   onTagChange: (tag: string | undefined) => void
   onPageChange: (pageIndex: number) => void
+  onSortChange: (sort: ServiceSort) => void
   onOpen: (id: number) => void
   onAdd: () => void
 }
 
-function ServiceTable({ keyword, tag, pageIndex, onTagChange, onPageChange, onOpen, onAdd }: ServiceTableProps) {
+function ServiceTable({ keyword, tag, pageIndex, sort, onTagChange, onPageChange, onSortChange, onOpen, onAdd }: ServiceTableProps) {
   const { t } = useTranslation()
-  const { status, data, reload } = useAsyncData(() => dataSource.searchServices({ keyword, tag, pageIndex, pageSize: PAGE_SIZE }))
+  const { status, data, reload } = useAsyncData(() =>
+    dataSource.searchServices({ keyword, tag, pageIndex, pageSize: PAGE_SIZE, sortBy: sort.field, sortDesc: sort.desc }),
+  )
   const tags = useMemo(() => [...new Set((data?.items ?? []).flatMap((s) => s.tags))].sort(), [data])
+
+  // 排序在後端進行（跨頁），欄位標題只反映目前的排序狀態
+  const sortable = (field: ServiceSortField) => ({
+    key: field,
+    sorter: true,
+    sortDirections: SORT_DIRECTIONS,
+    sortOrder: (sort.field === field ? (sort.desc ? 'descend' : 'ascend') : null) as SortOrder,
+  })
 
   if (status === 'error') {
     return (
@@ -129,6 +156,10 @@ function ServiceTable({ keyword, tag, pageIndex, onTagChange, onPageChange, onOp
           loading={status === 'loading'}
           dataSource={data?.items ?? []}
           onRow={(row) => ({ onClick: () => onOpen(row.id), className: 'cursor-pointer' })}
+          onChange={(_pagination, _filters, sorter, { action }) => {
+            if (action !== 'sort' || Array.isArray(sorter)) return
+            onSortChange(sorter.order ? { field: sorter.columnKey as ServiceSortField, desc: sorter.order === 'descend' } : DEFAULT_SORT)
+          }}
           pagination={{
             current: pageIndex,
             pageSize: PAGE_SIZE,
@@ -139,6 +170,7 @@ function ServiceTable({ keyword, tag, pageIndex, onTagChange, onPageChange, onOp
           columns={[
             {
               title: t('services.columns.name'),
+              ...sortable('Name'),
               render: (_, row) => (
                 <div className="flex flex-wrap items-center gap-1">
                   <span className="font-medium">{row.displayName}</span>
@@ -146,8 +178,24 @@ function ServiceTable({ keyword, tag, pageIndex, onTagChange, onPageChange, onOp
                 </div>
               ),
             },
-            { title: t('services.columns.serviceKey'), render: (_, row) => <code>{row.serviceKey}</code> },
-            { title: t('services.columns.hosts'), render: (_, row) => (row.hosts.length > 0 ? row.hosts.join(', ') : '—') },
+            { title: t('services.columns.serviceKey'), ...sortable('ServiceKey'), render: (_, row) => <code>{row.serviceKey}</code> },
+            { title: t('services.columns.hosts'), ...sortable('Host'), render: (_, row) => (row.hosts.length > 0 ? row.hosts.join(', ') : '—') },
+            {
+              title: t('services.columns.paths'),
+              key: 'paths',
+              render: (_, row) =>
+                row.paths.length > 0 ? (
+                  <div className="flex flex-col gap-0.5">
+                    {row.paths.map((path) => (
+                      <code key={path} className="break-all">
+                        {path}
+                      </code>
+                    ))}
+                  </div>
+                ) : (
+                  '—'
+                ),
+            },
             { title: t('services.columns.routeCount'), dataIndex: 'routeCount' },
             { title: t('services.columns.routingMode'), render: (_, row) => t(`services.routingMode.${row.routingMode}`) },
             {

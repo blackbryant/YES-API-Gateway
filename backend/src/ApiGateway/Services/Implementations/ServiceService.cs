@@ -63,7 +63,12 @@ public sealed partial class ServiceService : IServiceService
             throw new ArgumentException(ErrorCodes.PagingInvalid);
         }
 
-        var (rows, total) = await _services.SearchAsync(query.Keyword, query.Tag, (query.PageIndex - 1) * query.PageSize, query.PageSize, ct);
+        if (!Enum.IsDefined(query.SortBy))
+        {
+            throw new ArgumentException(ErrorCodes.ValidationFailed);
+        }
+
+        var (rows, total) = await _services.SearchAsync(query.Keyword, query.Tag, query.SortBy, query.SortDesc, (query.PageIndex - 1) * query.PageSize, query.PageSize, ct);
         var publishedAt = await _readSupport.GetActivePublishedAtAsync(ct);
 
         var items = rows.Select(r => new ServiceSummaryDto(
@@ -74,6 +79,7 @@ public sealed partial class ServiceService : IServiceService
             r.Service.IsActive,
             r.RouteCount,
             r.Hosts,
+            r.Paths,
             r.Service.DefaultExperimentId is null ? RoutingMode.Single : RoutingMode.AbTest,
             publishedAt is null || r.Service.UpdatedAt > publishedAt,
             r.Service.UpdatedAt)).ToList();

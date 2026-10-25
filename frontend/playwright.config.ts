@@ -1,8 +1,9 @@
 import { defineConfig, devices } from '@playwright/test'
-import { E2E_SERVER_PORT } from './vite.config.ts'
+import { ADMIN_BASE_PATH, E2E_SERVER_PORT } from './vite.config.ts'
 
 // 端對端測試使用範例資料，另開 5181 埠，不會重用串接後端的開發伺服器（5180）
-const BASE_URL = `http://localhost:${E2E_SERVER_PORT}`
+// 管理介面在 /admin/ 底下；測試內的路徑一律寫相對路徑（'hosts'、'./'），以此為基準解析
+const BASE_URL = `http://localhost:${E2E_SERVER_PORT}${ADMIN_BASE_PATH}`
 
 export default defineConfig({
   testDir: 'tests/e2e',
