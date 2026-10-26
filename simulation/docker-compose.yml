@@ -1,43 +1,21 @@
-# 001-02 靜態 / 動態路由與 A/B 測試 模擬環境
+# 模擬環境：.NET 閘道 + 測試後端 backend-a / backend-b（+ 閘道必需的 PostgreSQL）
 # 使用方式見 simulation/README.md；於 repo 根目錄執行：
+#   .\simulation\scripts\build-frontend.ps1                      # 先把管理介面打包進 wwwroot
 #   docker compose -f simulation/docker-compose.yml up -d --build
 #
-# 網路分三層，模擬實際部署：
-#   edge     對外網路：用戶端與閘道。閘道帶網域別名（模擬 DNS 指向閘道）
-#   internal 內部網路（internal: true）：閘道、資料庫、後端；用戶端連不到
-#   ops      維運網路：只用來把資料庫與假後端的埠開放給本機（dotnet run、整合測試），用戶端不在此網路
-#
-# 閘道在容器內時，服務主機填 http://backend-a:9001 或 http://172.31.0.11:9001，不能填 localhost。
-# 若網段與公司 VPN / 內網衝突，修改下方 subnet 與各 ipv4_address 即可。
+# 對外網址：http://api.example.local:8080（本機 hosts 需有 127.0.0.1 api.example.local）
+# 測試後端各自是一台主機，以固定 IP 當主機位址：http://172.31.0.11:9001、http://172.31.0.12:9002（不能填 localhost）
+# 網段若與公司 VPN / 內網衝突，修改下方 subnet 與各 ipv4_address 即可。
 
 name: yes-gw-sim
 
 networks:
-  edge:
-    ipam:
-      config: [{ subnet: 172.30.0.0/24 }]
-  internal:
-    internal: true
+  sim:
     ipam:
       config: [{ subnet: 172.31.0.0/24 }]
-  ops:
-    ipam:
-      config: [{ subnet: 172.29.0.0/24 }]
 
 volumes:
   pgdata: {}
-
-x-gateway: &gateway
-  build:
-    context: ..
-    dockerfile: backend/Dockerfile
-  image: yes-api-gateway:sim
-  env_file: .env
-  restart: unless-stopped
-
-x-backend: &backend
-  image: hashicorp/http-echo:1.0.0
-  restart: unless-stopped
 
 x-rest-backend: &rest-backend
   image: node:22.12.0-alpine
@@ -46,108 +24,58 @@ x-rest-backend: &rest-backend
   restart: unless-stopped
 
 services:
-  # ---- 資料庫：POSTGRES_USER / PASSWORD / DB 與閘道共用同一份 .env ----
+  # ---- 資料庫：閘道必需；POSTGRES_USER / PASSWORD / DB 與閘道共用同一份 .env ----
   postgres:
     image: postgres:17-alpine
     env_file: .env
-    networks:
-      internal: { ipv4_address: 172.31.0.5 }
-      ops: { ipv4_address: 172.29.0.5 }
     ports: ["${POSTGRES_HOST_PORT:-5433}:5432"]   # 供本機 dotnet run / 整合測試連線
     volumes: [pgdata:/var/lib/postgresql/data]
+    networks:
+      sim: { ipv4_address: 172.31.0.5 }
+    restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 3s
       timeout: 3s
       retries: 20
 
-  # ---- 閘道節點 1：負責套用 migration 與建立初始管理者 ----
-  gateway-1:
-    <<: *gateway
+  # ---- .NET 閘道（含管理介面 wwwroot/admin）----
+  gateway:
+    build:
+      context: ..
+      dockerfile: simulation/Dockerfile
+    image: yes-api-gateway:sim
+    env_file: .env
+    restart: unless-stopped
     depends_on:
       postgres: { condition: service_healthy }
     environment:
       ASPNETCORE_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:-Development}
       Database__ApplyMigrationsOnStartup: "true"
       Gateway__NodeId: gw-1
+      # 容器間固定連 postgres 的 5432；.env 的 POSTGRES_HOST_PORT 才是對本機開放的埠
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
     networks:
-      edge:
-        ipv4_address: 172.30.0.10
-        # 對外網域：edge 網路內的用戶端以這些名稱連到閘道，Host 標頭即為此網域
-        aliases: [api.example.local, api-test.example.local]
-      internal: { ipv4_address: 172.31.0.10 }
-    ports: ["${GATEWAY1_PORT:-8080}:8080"]
+      sim:
+        ipv4_address: 172.31.0.10
+        # 對外網域：容器內以此名稱連到閘道時，Host 標頭即為 api.example.local:8080
+        aliases: [api.example.local]
+    ports: ["${GATEWAY_PORT:-8080}:8080"]
 
-  # ---- 閘道節點 2（選用，quickstart §9 多節點同步）----
-  # 待 gateway-1 啟動完成後再啟動，避免兩個節點同時建立初始資料：
-  #   docker compose -f simulation/docker-compose.yml --profile multi-node up -d gateway-2
-  gateway-2:
-    <<: *gateway
-    profiles: [multi-node]
-    depends_on:
-      postgres: { condition: service_healthy }
-    environment:
-      ASPNETCORE_ENVIRONMENT: ${GATEWAY_ENVIRONMENT:-Development}
-      Database__ApplyMigrationsOnStartup: "false"
-      Gateway__NodeId: gw-2
-      ADMIN_USERNAME: ""
-      ADMIN_PASSWORD: ""
-    networks:
-      edge:
-        ipv4_address: 172.30.0.20
-        aliases: [gw2.example.local]
-      internal: { ipv4_address: 172.31.0.20 }
-    ports: ["${GATEWAY2_PORT:-8081}:8080"]
-
-  # ---- 假後端（只在內部網路）----
-  # 另掛 ops 網路對本機開放 9001～9004，閘道以 dotnet run 執行時可沿用 quickstart 的 http://localhost:9001
-  # backend-a / backend-b：REST 測試服務（rest-backend/server.js），/items 支援 GET / POST / PUT / PATCH / DELETE 與查詢參數，
-  # 其他路徑回顯請求；回應的 service 欄位為自己的名稱，用來判斷流量落在哪一組
+  # ---- 測試後端：REST 測試服務（rest-backend/server.js）----
+  # /items 支援 GET / POST / PUT / PATCH / DELETE 與查詢參數，其他路徑回顯請求；
+  # 回應的 service 欄位為自己的名稱，用來判斷流量落在哪一組
   backend-a:
     <<: *rest-backend
     environment: { SERVICE_NAME: backend-a, PORT: "9001" }
     networks:
-      internal: { ipv4_address: 172.31.0.11 }
-      ops: { ipv4_address: 172.29.0.11 }
+      sim: { ipv4_address: 172.31.0.11 }
     ports: ["9001:9001"]
 
   backend-b:
     <<: *rest-backend
     environment: { SERVICE_NAME: backend-b, PORT: "9002" }
     networks:
-      internal: { ipv4_address: 172.31.0.12 }
-      ops: { ipv4_address: 172.29.0.12 }
+      sim: { ipv4_address: 172.31.0.12 }
     ports: ["9002:9002"]
-
-  # 固定回 500，用於自動回退（quickstart §7、G-42）
-  backend-error:
-    <<: *backend
-    command: ["-listen=:9003", "-status-code=500", "-text=backend-error"]
-    networks:
-      internal: { ipv4_address: 172.31.0.13 }
-      ops: { ipv4_address: 172.29.0.13 }
-    ports: ["9003:9003"]
-
-  # 回顯收到的路徑與標頭，驗證「移除路徑前綴」、轉送給後端的 Host / X-Forwarded-* 等
-  backend-whoami:
-    image: traefik/whoami:v1.10
-    command: ["--port", "9004"]
-    hostname: backend-whoami
-    restart: unless-stopped
-    networks:
-      internal: { ipv4_address: 172.31.0.14 }
-      ops: { ipv4_address: 172.29.0.14 }
-    ports: ["9004:9004"]
-
-  # ---- 用戶端（只在對外網路）：固定 IP，供日後 IP 白名單 / 封鎖（001-11、001-14）測試 ----
-  client-a:
-    image: curlimages/curl:8.10.1
-    entrypoint: ["sleep", "infinity"]
-    networks:
-      edge: { ipv4_address: 172.30.0.101 }
-
-  client-b:
-    image: curlimages/curl:8.10.1
-    entrypoint: ["sleep", "infinity"]
-    networks:
-      edge: { ipv4_address: 172.30.0.102 }

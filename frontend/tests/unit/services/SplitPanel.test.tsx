@@ -53,15 +53,14 @@ describe('SplitPanel', () => {
     expect(screen.getByText('各組比例加總必須為 100（目前 90）')).toBeInTheDocument()
   })
 
-  it('強制分組標頭與自動回退設定會送出', async () => {
-    const onChange = vi.fn()
+  it('暫不顯示排程與自動回退設定', () => {
     renderWithProviders(
-      <SplitPanel routingMode="AbTest" experiment={defaultExperiment(HOSTS)} hosts={[]} readOnly={false} onChange={onChange} />,
+      <SplitPanel routingMode="AbTest" experiment={defaultExperiment(HOSTS)} hosts={[]} readOnly={false} onChange={vi.fn()} />,
     )
 
-    await userEvent.click(screen.getByRole('switch', { name: '啟用自動回退' }))
-
-    expect(onChange.mock.lastCall![1].autoRollback).toEqual({ thresholdPercent: 2, durationMin: 5, minSamples: 100 })
+    expect(screen.queryByText('排程')).not.toBeInTheDocument()
+    expect(screen.queryByText('開始時間')).not.toBeInTheDocument()
+    expect(screen.queryByRole('switch', { name: '啟用自動回退' })).not.toBeInTheDocument()
   })
 
   it('有效狀態以燈號加文字呈現，並依狀態提供手動操作', async () => {

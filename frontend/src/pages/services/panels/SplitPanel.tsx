@@ -1,16 +1,8 @@
-import { Alert, Button, DatePicker, Input, InputNumber, Popconfirm, Radio, Slider, Switch, Typography } from 'antd'
-import dayjs from 'dayjs'
+import { Alert, Button, Input, InputNumber, Popconfirm, Radio, Slider, Switch, Typography } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { ExperimentStatusBadge } from '../../../components/common/ExperimentStatusBadge'
 import type { ExperimentInput, ExperimentRuntimeAction, ExperimentStatus, HostInput, RoutingMode } from '../../../data/types'
-import {
-  DEFAULT_FORCE_HEADER,
-  DEFAULT_ROLLBACK,
-  MAX_ROLLBACK_DURATION_MIN,
-  MAX_STICKY_DAYS,
-  WEIGHT_TOTAL,
-  defaultExperiment,
-} from '../serviceForm'
+import { DEFAULT_FORCE_HEADER, MAX_STICKY_DAYS, WEIGHT_TOTAL, defaultExperiment } from '../serviceForm'
 
 const PERCENT_MAX = 100
 
@@ -36,7 +28,7 @@ interface SplitPanelProps {
   onAction?: (action: ExperimentRuntimeAction) => void
 }
 
-/** ④ 分流：不分流 / A/B 測試（比例、黏著、強制分組、排程、自動回退、手動操作） */
+/** ④ 分流：不分流 / A/B 測試（比例、黏著、強制分組、手動操作）；排程與自動回退暫不開放設定 */
 export function SplitPanel({ routingMode, experiment, hosts, effectiveStatus, isAutoRolledBack, readOnly, onChange, onAction }: SplitPanelProps) {
   const { t } = useTranslation()
 
@@ -64,7 +56,6 @@ export function SplitPanel({ routingMode, experiment, hosts, effectiveStatus, is
 
   const sum = experiment?.variants.reduce((total, v) => total + v.weightPercent, 0) ?? WEIGHT_TOTAL
   const forceHeader = experiment?.forceRules.find((r) => r.matchType === 'Header')?.matchName ?? ''
-  const rollback = experiment?.autoRollback
 
   return (
     <div className="flex flex-col gap-4">
@@ -172,79 +163,6 @@ export function SplitPanel({ routingMode, experiment, hosts, effectiveStatus, is
             </label>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <Typography.Text strong>{t('split.schedule')}</Typography.Text>
-            <div className="flex flex-wrap gap-4">
-              <label className="flex flex-col gap-1">
-                <span>{t('split.startAt')}</span>
-                <DatePicker
-                  showTime
-                  value={experiment.startAt ? dayjs(experiment.startAt) : null}
-                  disabled={readOnly}
-                  aria-label={t('split.startAt')}
-                  onChange={(value) => update({ startAt: value ? value.toISOString() : null })}
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span>{t('split.endAt')}</span>
-                <DatePicker
-                  showTime
-                  value={experiment.endAt ? dayjs(experiment.endAt) : null}
-                  disabled={readOnly}
-                  aria-label={t('split.endAt')}
-                  onChange={(value) => update({ endAt: value ? value.toISOString() : null })}
-                />
-              </label>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-2">
-              <Switch
-                checked={rollback != null}
-                disabled={readOnly}
-                onChange={(on) => update({ autoRollback: on ? { ...DEFAULT_ROLLBACK } : null })}
-              />
-              {t('split.rollbackEnabled')}
-            </label>
-            <Typography.Text type="secondary" className="text-xs">
-              {t('split.rollbackHint')}
-            </Typography.Text>
-            {rollback && (
-              <div className="flex flex-wrap gap-4">
-                <label className="flex flex-col gap-1">
-                  <span>{t('split.threshold')}</span>
-                  <InputNumber
-                    min={0.1}
-                    max={PERCENT_MAX}
-                    step={0.5}
-                    value={rollback.thresholdPercent}
-                    disabled={readOnly}
-                    onChange={(v) => update({ autoRollback: { ...rollback, thresholdPercent: v ?? DEFAULT_ROLLBACK.thresholdPercent } })}
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span>{t('split.duration')}</span>
-                  <InputNumber
-                    min={1}
-                    max={MAX_ROLLBACK_DURATION_MIN}
-                    value={rollback.durationMin}
-                    disabled={readOnly}
-                    onChange={(v) => update({ autoRollback: { ...rollback, durationMin: v ?? DEFAULT_ROLLBACK.durationMin } })}
-                  />
-                </label>
-                <label className="flex flex-col gap-1">
-                  <span>{t('split.minSamples')}</span>
-                  <InputNumber
-                    min={1}
-                    value={rollback.minSamples}
-                    disabled={readOnly}
-                    onChange={(v) => update({ autoRollback: { ...rollback, minSamples: v ?? DEFAULT_ROLLBACK.minSamples } })}
-                  />
-                </label>
-              </div>
-            )}
-          </div>
         </>
       )}
     </div>

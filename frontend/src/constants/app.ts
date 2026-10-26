@@ -30,5 +30,12 @@ export const DEFAULT_LANGUAGE: Language = 'zh-TW'
 export const STORAGE_KEYS = {
   auth: 'yes.auth',
   ui: 'yes.ui',
+  chunkReloadAt: 'yes.chunkReloadAt',
 } as const
 
+/** 動態載入失敗後自動重新整理的最短間隔，避免檔案真的不存在時無限重新整理 */
+export const CHUNK_RELOAD_COOLDOWN_MS = 10000
+
+
+/** 系統標誌圖檔（public/yes-icon.svg），需帶上部署基底路徑 */
+export const APP_ICON_URL = `${import.meta.env.BASE_URL}yes-icon.svg`

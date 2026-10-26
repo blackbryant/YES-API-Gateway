@@ -1,9 +1,9 @@
 import { Alert, Button, Card, Form, Input, Typography } from 'antd'
-import { Lock, User, Waypoints } from 'lucide-react'
+import { Lock, User } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useLocation, useNavigate } from 'react-router'
-import { USERNAME_MAX_LENGTH } from '../../constants/app'
+import { APP_ICON_URL, USERNAME_MAX_LENGTH } from '../../constants/app'
 import { ROUTES } from '../../constants/routes'
 import { useAuthStore } from '../../stores/authStore'
 
@@ -47,7 +47,7 @@ export default function LoginPage() {
     <div className="flex min-h-full items-center justify-center bg-gray-100 p-4">
       <Card className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-2">
-          <Waypoints size={32} className="text-blue-600" aria-hidden />
+          <img src={APP_ICON_URL} alt="" width={56} height={56} aria-hidden />
           <Typography.Title level={3} className="mb-0">
             {t('login.title')}
           </Typography.Title>

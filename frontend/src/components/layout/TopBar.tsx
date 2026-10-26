@@ -1,9 +1,9 @@
 import { App, Button, Tag, Tooltip } from 'antd'
-import { Send, Upload, Waypoints } from 'lucide-react'
+import { Send, Upload } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { ROLES } from '../../constants/app'
+import { APP_ICON_URL, ROLES } from '../../constants/app'
 import { ROUTES } from '../../constants/routes'
 import { dataSource } from '../../data/dataSource'
 import { useAsyncData } from '../../hooks/useAsyncData'
@@ -71,7 +71,7 @@ export function TopBar() {
   return (
     <div className="flex h-full items-center justify-between gap-2">
       <Link to={ROUTES.overview} className="flex shrink-0 items-center gap-2 font-semibold text-inherit">
-        <Waypoints size={20} aria-hidden />
+        <img src={APP_ICON_URL} alt="" width={28} height={28} aria-hidden />
         <span className="hidden sm:inline">{t('app.name')}</span>
       </Link>
       <div className="flex min-w-0 items-center gap-2">

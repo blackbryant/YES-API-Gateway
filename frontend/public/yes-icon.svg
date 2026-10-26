@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="title desc">
+  <title id="title">Yes circuit Y icon</title>
+  <desc id="desc">A white, circuit-inspired Y symbol on a rounded navy square.</desc>
+  <rect x="8" y="8" width="240" height="240" rx="38" fill="#071A4A"/>
+
+  <!-- Main branching Y silhouette -->
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M56 58 C69 67 82 82 94 96 C105 109 116 119 128 127 C138 134 140 145 135 157 C132 164 130 171 130 183" stroke-width="15"/>
+    <path d="M200 58 C187 68 174 82 162 96 C151 109 140 119 128 127" stroke-width="15"/>
+  </g>
+
+  <!-- Circuit traces carved into the arms -->
+  <g fill="none" stroke="#071A4A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M70 70 L82 82 L82 91 L96 105 L107 105 L117 115"/>
+    <path d="M186 70 L174 82 L174 91 L160 105 L149 105 L139 115"/>
+    <path d="M130 147 L130 177"/>
+  </g>
+
+  <!-- Small trace connection pads -->
+  <g fill="#FFFFFF">
+    <circle cx="82" cy="91" r="4.2"/>
+    <circle cx="96" cy="105" r="4.2"/>
+    <circle cx="174" cy="91" r="4.2"/>
+    <circle cx="160" cy="105" r="4.2"/>
+    <circle cx="130" cy="147" r="4.2"/>
+  </g>
+
+  <!-- Three terminal rings -->
+  <g fill="#FFFFFF">
+    <circle cx="54" cy="55" r="17"/>
+    <circle cx="202" cy="55" r="17"/>
+    <circle cx="130" cy="198" r="17"/>
+  </g>
+  <g fill="#071A4A">
+    <circle cx="54" cy="55" r="8.5"/>
+    <circle cx="202" cy="55" r="8.5"/>
+    <circle cx="130" cy="198" r="8.5"/>
+  </g>
+</svg>
